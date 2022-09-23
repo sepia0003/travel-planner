@@ -21,5 +21,5 @@ class Database:
     def commit(self):
         self.db.commit()
 
-# Databse의 객체만 만들면 서버생성,커서생성 자동으로해주고
+# Database의 객체만 만들면 서버생성,커서생성 자동으로해주고
 # 커서에명령어입력하는것만 따로 떼어낸 클래스임
