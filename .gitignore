@@ -4,6 +4,7 @@ bin-release/
 [Oo]bj/
 [Bb]in/
 __pycache__/
+mapdata/
 
 # Other files and folders
 .settings/

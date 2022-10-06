@@ -2,10 +2,12 @@ import requests
 
 loc_pick = [139.700621, 35.658341]
 loc_del = [139.745747, 35.659034]
-query_url = "http://192.168.0.150:5000/route/v1/driving/{},{};{},{}?steps=true".format(loc_pick[0], loc_pick[1], loc_del[0], loc_del[1])
+query_url = "http://localhost:5000/route/v1/driving/139.700621,35.658341;139.745747,35.659034"
+# query_url = "http://localhost:5000/route/v1/driving/{},{};{},{}?steps=true".format(loc_pick[0], loc_pick[1], loc_del[0], loc_del[1])
 response = requests.get(query_url)
 
-result = response.json()
+result = response.json() #.json() 메소드는 response 객체가 json일때 이를 딕셔너리로 변환
+print(result)
 route = result["routes"][0]
 legs = route["legs"][0]["steps"]
 list_locations = []
@@ -14,7 +16,7 @@ for point in legs:
         list_locations.append(it["location"][::-1])
 
 
-loc_mid = list_locations.copy()
+# loc_mid = list_locations.copy()
 
 import folium
 
