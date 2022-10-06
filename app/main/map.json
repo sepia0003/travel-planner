@@ -1,0 +1,35 @@
+{
+    'code': 'Ok', 
+    'routes': [
+        {
+            'geometry': "uosxE}gtsYrDq@_CgKw@kLoG_oBkHs]sKg[~Uc|@y@kHlDgL", 
+            'legs': [
+                {
+                    'steps': [], 
+                    'distance': 4407.8, 
+                    'duration': 319.5, 
+                    'summary': '', 
+                    'weight': 319.5
+                }
+            ], 
+            'distance': 4407.8, 
+            'duration': 319.5, 
+            'weight_name': 'routability', 
+            'weight': 319.5
+        }
+    ], 
+    'waypoints': [
+        {
+            'hint': "1m9JgP___38IAAAACQAAAAAAAAAsAAAANWwVQb30Wz8AAAAAxbJGQggAAAAJAAAAAAAAACwAAAAPBAAAlKlTCGoaIAKNqVMIZRogAgAAvwiS35vJ", 
+            'distance': 0.842244, 
+            'name': '神宮 通り', 
+            'location': [139.700628, 35.658346]
+        }, 
+        {
+            'hint': "z_UJgGLhAYApAAAAAwAAAB4AAAA6AAAAroc3Ql6pT0AxNAVCDK-AQikAAAADAAAAHgAAADoAAAAPBAAAs1lUCPIcIALTWVQIGh0gAgEAvweS35vJ", 
+            'distance': 5.299912, 
+            'name': '東京タワ ー通り', 
+            'location': [139.745715, 35.658994]
+        }
+    ]
+}
