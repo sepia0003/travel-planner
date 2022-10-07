@@ -25,10 +25,3 @@ folium.Marker(location=start_point, icon=folium.Icon(icon='play', color='green')
 folium.Marker(location=end_point, icon=folium.Icon(icon='stop', color='red')).add_to(map)
 # folium은 location값을 기본적으로 리스트로 준다.
 map.save('testmap.html')
-
-# folium_map = folium.Map(location=loc_mid[::-1], zoom_start=14)
-# folium.Marker(location=loc_pick[::-1], icon=folium.Icon(color='red')).add_to(folium_map)
-# folium.Marker(location=loc_del[::-1]).add_to(folium_map)
-# line = folium.vector_layers.PolyLine(locations=list_locations, color='black', weight=10)
-# line.add_to(folium_map)
-# folium_map.save("map.html")
