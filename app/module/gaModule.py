@@ -43,12 +43,12 @@ class tour:
 
     def __len__(self):
         return len(self.tour)
-    
-    def __getitem__(self, index):
-        return self.tour[index]
 
     def __setitem__(self, key, value):
         self.tour[key] = value
+    
+    def __getitem__(self, index):
+        return self.tour[index]
 
     def gettourpoint(self, index):
         return self.tour[index]
@@ -61,7 +61,7 @@ class tour:
     def toursize(self):
         return len(self.tour)
 
-    def generateTour(self):
+    def generatetour(self):
         for i in range(0, self.points.numofpoints()):
             self.settourpoint(i, self.points.getpoint(i))
         random.shuffle(self.tour)
@@ -87,3 +87,37 @@ class tour:
 
     def thistourcontains(self, city):
         return city in self.tour
+
+class pooloftours:
+    def __init__(self, points, poolsize, init):
+        self.poolsize = poolsize
+        self.tours = []
+        for i in range(poolsize):
+            self.tours.append(None)
+        
+        if init:
+            for i in range(poolsize):
+                newtour = tour(points)
+                newtour.generatetour()
+                self.savetour(i, newtour)
+        
+    def __setitem__(self, key, value):
+        self.tours[key] = value
+
+    def __getitem__(self, index):
+        return self.tours[index]
+    
+    def savetour(self, index, tour):
+        self.tours[index] = tour
+
+    def gettour(self, index):
+        return self.tours[index]
+
+    def getmostfit(self):
+        mostfit = self.tours[0]
+        
+        for i in range(self.poolsize):
+            if mostfit.getfitness() <= self.gettour(i).getfitness():
+                mostfit = self.gettour(i)
+
+        return mostfit
