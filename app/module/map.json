@@ -2,11 +2,11 @@
     'code': 'Ok', 
     'routes': [
         {
-            'geometry': "uosxE}gtsYrDq@_CgKw@kLoG_oBkHs]sKg[~Uc|@y@kHlDgL", 
+            'geometry': "uosxE}gtsYrDq@_CgKw@kLoG_oBkHs]sKg[~Uc|@y@kHlDgL", /*트래블*/
             'legs': [
                 {
                     'steps': [], 
-                    'distance': 4407.8, 
+                    'distance': 4407.8, /*미터*/
                     'duration': 319.5, 
                     'summary': '', 
                     'weight': 319.5
