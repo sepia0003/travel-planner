@@ -34,6 +34,7 @@ class points:
     def numofpoints(self):
         return len(self.points)
 
+
 class tour:
     def __init__(self, points):
         self.points = points
@@ -88,9 +89,9 @@ class tour:
     def thistourcontains(self, city):
         return city in self.tour
 
+
 class pooloftours:
     def __init__(self, points, poolsize, init):
-        self.poolsize = poolsize
         self.tours = []
         for i in range(poolsize):
             self.tours.append(None)
@@ -121,3 +122,76 @@ class pooloftours:
                 mostfit = self.gettour(i)
 
         return mostfit
+
+    def poolsize(self):
+        return len(self.tours)
+
+
+class ga:
+    def __init__(self, points, mutationrate=0.05, parentcandsize=5, elitism=True):
+        self.points = points
+        self.mutationrate = mutationrate
+        self.parentcandsize = parentcandsize
+        self.elitism = elitism
+
+    def evolve(self, oldpool):
+        newpool = pooloftours(self.points, oldpool.poolsize(), False)
+        elitismoffset = 0
+        if self.elitism:
+            newpool.savetour(0, oldpool.getmostfit())
+            elitismoffset = 1
+
+        for i in range(elitismoffset, newpool.poolsize()):
+            parent1 = self.candselect(oldpool)
+            parent2 = self.candselect(oldpool)
+            child = self.crossover(parent1, parent2)
+            newpool.savetour(i, child)
+
+        for i in range(elitismoffset, newpool.poolsize()):
+            self.mutate(newpool.gettour(i))
+        
+        return newpool
+
+    def crossover(self, parent1, parent2):
+        child = tour(self.points)
+
+        patchstart = int(random.random() * parent1.toursize())
+        patchend = int(random.random() * parent1.toursize())
+
+        for i in range(0, child.toursize()):
+            if patchstart < patchend and patchstart < i and i < patchend:
+                child.settourpoint(i, parent1.gettourpoint(i))
+            elif patchstart > patchend:
+                if not (i < patchstart and i > patchend):
+                    child.settourpoint(i, parent1.gettourpoint(i))
+
+        for i in range(0, parent2.toursize()):
+            if not child.thistourcontains(parent2.gettourpoint(i)):
+                for j in range(0, child.toursize()):
+                    if child.gettourpoint(j) == None:
+                        child.settourpoint(j, parent2.gettourpoint(i))
+                        break
+        
+        return child
+
+    def mutate(self, tour):
+        for touridx1 in range(0, tour.toursize()):
+            if random.random() < self.mutationrate:
+                touridx2 = int(tour.toursize() * random.random())
+
+                point1 = tour.gettourpoint(touridx1)
+                point2 = tour.gettourpoint(touridx2)
+
+                tour.settourpoint(touridx2, point1)
+                tour.settourpoint(touridx1, point2)
+
+    def candselect(self, pool):
+        newpool = pool(self.points, self.parentcandsize, False)
+        for i in range(0, self.parentcandsize):
+            randomid = int(random.random() * pool.poolsize())
+            newpool.savetour(i, pool.gettour(randomid))
+        mostfit = newpool.getmostfit()
+        return mostfit
+
+
+
