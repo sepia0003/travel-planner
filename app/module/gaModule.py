@@ -4,7 +4,7 @@ import polyline
 import folium
 import random
 
-class city:
+class Node:
     def __init__(self, lon=None, lat=None):
         self.lon = lon
         self.lat = lat
@@ -18,28 +18,28 @@ class city:
     def distanceTo(self, dest): #lon,lat ~ lon,lat
         url = "http://localhost:5000/route/v1/driving/{},{};{},{}?steps=true".format(self.getlon(), self.getlat(), dest.getlon(), dest.getlat())
         response = requests.get(url).json()
-
         distance = response["routes"][0]["distance"] # unit=M
+        return distance
 
 
-class points:
-    points = []                         # points = [city1(obj), city2(obj), ...]
+class NodeStorage:
+    storage = []                         # storage = [city1(obj), city2(obj), ...]
 
-    def addpoint(self, city):
-        self.points.append(city)
+    def addnode(self, node):
+        self.storage.append(node)
 
-    def getpoint(self, index):
-        return self.points[index]
+    def getnode(self, index):
+        return self.storage[index]
 
-    def numofpoints(self):
-        return len(self.points)
+    def storagesize(self):
+        return len(self.storage)
 
 
-class tour:
-    def __init__(self, points):
-        self.points = points
+class Tour:
+    def __init__(self, nodestorage):
+        self.nodestorage = nodestorage
         self.tour = []                  # tour = [visitcity1(obj), visitcity2(obj), ...]
-        self.fitness = 0.0
+        self.fitness = 0.0              # fitness would be value which indicates how well "the tour" fits
         self.tourdistance = 0
 
     def __len__(self):
@@ -51,10 +51,10 @@ class tour:
     def __getitem__(self, index):
         return self.tour[index]
 
-    def gettourpoint(self, index):
+    def getnode(self, index):
         return self.tour[index]
 
-    def settourpoint(self, key, value):
+    def setnode(self, key, value):
         self.tour[key] = value
         self.fitness = 0.0
         self.tourdistance = 0
@@ -63,8 +63,8 @@ class tour:
         return len(self.tour)
 
     def generatetour(self):
-        for i in range(0, self.points.numofpoints()):
-            self.settourpoint(i, self.points.getpoint(i))
+        for i in range(0, self.nodestorage.storagesize()):
+            self.setnode(i, self.nodestorage.getnode(i))
         random.shuffle(self.tour)
     
     def getfitness(self):
@@ -76,29 +76,29 @@ class tour:
         if self.tourdistance == 0:
             alldistance = 0
             for i in range(0, self.toursize()):
-                frompoint = self.gettourpoint(i)
+                frompoint = self.getnode(i)
                 topoint = None
                 if i+1 < self.toursize():
-                    topoint = self.gettourpoint(i+1)
+                    topoint = self.getnode(i+1)
                 else:
-                    topoint = self.gettourpoint(0)
+                    topoint = self.getnode(0)
                 alldistance += frompoint.distanceTo(topoint)
             self.tourdistance = alldistance
         return self.tourdistance
 
-    def thistourcontains(self, city):
-        return city in self.tour
+    def containing(self, node):
+        return node in self.tour
 
 
-class pooloftours:
-    def __init__(self, points, poolsize, init):
+class Population:
+    def __init__(self, nodestorage, populationsize, init):
         self.tours = []
-        for i in range(poolsize):
+        for i in range(0, populationsize):
             self.tours.append(None)
         
         if init:
-            for i in range(poolsize):
-                newtour = tour(points)
+            for i in range(0, populationsize):
+                newtour = Tour(nodestorage)
                 newtour.generatetour()
                 self.savetour(i, newtour)
         
@@ -117,81 +117,132 @@ class pooloftours:
     def getmostfit(self):
         mostfit = self.tours[0]
         
-        for i in range(self.poolsize):
+        for i in range(self.populationsize()):
             if mostfit.getfitness() <= self.gettour(i).getfitness():
                 mostfit = self.gettour(i)
 
         return mostfit
 
-    def poolsize(self):
+    def populationsize(self):
         return len(self.tours)
 
 
-class ga:
-    def __init__(self, points, mutationrate=0.05, parentcandsize=5, elitism=True):
-        self.points = points
+class GeneticAlgo:
+    def __init__(self, nodestorage, mutationrate=0.05, parentcandsize=5, elitism=True):
+        self.nodestorage = nodestorage
         self.mutationrate = mutationrate
         self.parentcandsize = parentcandsize
         self.elitism = elitism
 
-    def evolve(self, oldpool):
-        newpool = pooloftours(self.points, oldpool.poolsize(), False)
+    def evolvepopulation(self, oldpopulation):
+        newpopulation = Population(self.nodestorage, oldpopulation.populationsize(), False)
+
         elitismoffset = 0
         if self.elitism:
-            newpool.savetour(0, oldpool.getmostfit())
+            newpopulation.savetour(0, oldpopulation.getmostfit())
             elitismoffset = 1
 
-        for i in range(elitismoffset, newpool.poolsize()):
-            parent1 = self.candselect(oldpool)
-            parent2 = self.candselect(oldpool)
+        for i in range(elitismoffset, newpopulation.populationsize()):
+            parent1 = self.selectmostfittour(oldpopulation)
+            parent2 = self.selectmostfittour(oldpopulation)
             child = self.crossover(parent1, parent2)
-            newpool.savetour(i, child)
+            newpopulation.savetour(i, child)
 
-        for i in range(elitismoffset, newpool.poolsize()):
-            self.mutate(newpool.gettour(i))
+        for i in range(elitismoffset, newpopulation.populationsize()):
+            self.mutate(newpopulation.gettour(i))
         
-        return newpool
+        return newpopulation
 
-    def crossover(self, parent1, parent2):
-        child = tour(self.points)
+    def crossover(self, parent1, parent2):      # parent1, parent2, child are all "tour"s
+        child = Tour(self.nodestorage)
 
         patchstart = int(random.random() * parent1.toursize())
         patchend = int(random.random() * parent1.toursize())
 
-        for i in range(0, child.toursize()):
+        for i in range(0, child.toursize()):    # randomly select patchstart, patchend, and mix tour timelines on that basis
             if patchstart < patchend and patchstart < i and i < patchend:
-                child.settourpoint(i, parent1.gettourpoint(i))
+                child.setnode(i, parent1.getnode(i))
             elif patchstart > patchend:
                 if not (i < patchstart and i > patchend):
-                    child.settourpoint(i, parent1.gettourpoint(i))
+                    child.setnode(i, parent1.getnode(i))
 
         for i in range(0, parent2.toursize()):
-            if not child.thistourcontains(parent2.gettourpoint(i)):
+            if not child.containing(parent2.getnode(i)):
                 for j in range(0, child.toursize()):
-                    if child.gettourpoint(j) == None:
-                        child.settourpoint(j, parent2.gettourpoint(i))
+                    if child.getnode(j) == None:
+                        child.setnode(j, parent2.getnode(i))
                         break
         
         return child
 
     def mutate(self, tour):
         for touridx1 in range(0, tour.toursize()):
-            if random.random() < self.mutationrate:
+            if random.random() < self.mutationrate:     # with little probablility, exchange nodes in the tour
                 touridx2 = int(tour.toursize() * random.random())
 
-                point1 = tour.gettourpoint(touridx1)
-                point2 = tour.gettourpoint(touridx2)
+                node1 = tour.getnode(touridx1)
+                node2 = tour.getnode(touridx2)
 
-                tour.settourpoint(touridx2, point1)
-                tour.settourpoint(touridx1, point2)
+                tour.setnode(touridx2, node1)
+                tour.setnode(touridx1, node2)
 
-    def candselect(self, pool):
-        newpool = pool(self.points, self.parentcandsize, False)
+    def selectmostfittour(self, somepopulation):
+        temppopulation = Population(self.nodestorage, self.parentcandsize, False)
+
         for i in range(0, self.parentcandsize):
-            randomid = int(random.random() * pool.poolsize())
-            newpool.savetour(i, pool.gettour(randomid))
-        mostfit = newpool.getmostfit()
-        return mostfit
+            randpopidx = int(random.random() * somepopulation.populationsize())
+            temppopulation.savetour(i, somepopulation.gettour(randpopidx)) # temppopulation can be like [tour5, tour5, tour2, tour1, tour8]
+
+        mostfittour = temppopulation.getmostfit()
+        return mostfittour
 
 
 
+if __name__ == '__main__':
+    n_nodes = 10
+    populationsize = 50
+    n_generation = 100
+
+    nodestorage = NodeStorage()
+
+    # listing nodes
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721)) # TUS
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789)) # gatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930)) # shinagawa
+    
+    population = Population(nodestorage, populationsize=populationsize, init=True)
+    geneticalgo = GeneticAlgo(nodestorage)
+
+    # evolve
+    for i in range(n_generation):
+        population = geneticalgo.evolvepopulation(population)
+
+    result = population.getmostfit().tour # result = [city, city, city, city, ...]
+
+    # make map with this result
+    lonlist = []
+    latlist = []
+    latlonlist = []
+    for i in result:
+        lonlist.append(i.getlon())
+        latlist.append(i.getlat())
+        latlonlist.append((i.getlat(), i.getlon()))
+
+    map = folium.Map(location=[sum(latlist)/10, sum(lonlist)/10], zoom_start=13)
+    folium.PolyLine(latlonlist, weight=8, color='blue', opacity=0.6).add_to(map)
+    for i in range(n_nodes):
+        folium.Marker(location=latlonlist[i], icon=folium.Icon(icon='play', color='green')).add_to(map)
+
+    map.save('gamap.html')
+
+
+
+
+    

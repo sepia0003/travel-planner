@@ -11,13 +11,15 @@ result = response.json() #.json() 메소드는 response 객체가 json일때 이
 
 # routes_dict = result["routes"][0] "routes"에 해당하는 밸류가 리스트이기에 0으로 접근
 geometry = result["routes"][0]["geometry"]
-travel = polyline.decode(geometry) # 튜플짝의 원소로이루어진 리스트1개
+travel = polyline.decode(geometry) # 경로의 (위도, 경도) 튜플짝의 원소로이루어진 리스트1개
 start_point = [result["waypoints"][0]["location"][0] , result["waypoints"][0]["location"][1]]
 end_point = [result["waypoints"][1]["location"][0] , result["waypoints"][1]["location"][1]]
 start_point.reverse() # 반환해주는 순서가 귀찮게 경도,위도 순서라 뒤바꿔줘야함 
 end_point.reverse()
 # 리스트안에 인덱스0으로서 딕셔너리가, 인덱스1로서 딕셔너리가 각각들어가있으므로 리스트[인덱스]로 각딕셔너리에 접근
 # 리스트 슬라이싱 리스트[::] 는 슬라이싱한 새로운리스트를 반환한다. 기존리스트를 변경하는게 아님
+
+print(travel)
 
 map = folium.Map(location=[(start_point[0] + end_point[0])/2 , (start_point[1] + end_point[1])/2], zoom_start=13)
 folium.PolyLine(travel, weight=8, color='blue', opacity=0.6).add_to(map)
