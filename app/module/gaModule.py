@@ -16,7 +16,7 @@ class Node:
         return self.lat
 
     def distanceTo(self, dest): #lon,lat ~ lon,lat
-        url = "http://localhost:5000/route/v1/driving/{},{};{},{}?steps=true".format(self.getlon(), self.getlat(), dest.getlon(), dest.getlat())
+        url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(self.getlon(), self.getlat(), dest.getlon(), dest.getlat())
         response = requests.get(url).json()
         distance = response["routes"][0]["distance"] # unit=M
         return distance
@@ -41,6 +41,8 @@ class Tour:
         self.tour = []                  # tour = [visitcity1(obj), visitcity2(obj), ...]
         self.fitness = 0.0              # fitness would be value which indicates how well "the tour" fits
         self.tourdistance = 0
+        for i in range(0, self.nodestorage.storagesize()):
+            self.tour.append(None)
 
     def __len__(self):
         return len(self.tour)
@@ -236,11 +238,27 @@ if __name__ == '__main__':
         latlonlist.append((i.getlat(), i.getlon()))
 
     map = folium.Map(location=[sum(latlist)/10, sum(lonlist)/10], zoom_start=13)
-    folium.PolyLine(latlonlist, weight=8, color='blue', opacity=0.6).add_to(map)
+
+    for i in range(n_nodes):
+        if i != n_nodes-1:
+            url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[i+1], latlist[i+1])
+            response = requests.get(url).json()
+            geometry = response["routes"][0]["geometry"]
+            route = polyline.decode(geometry)
+            folium.PolyLine(route, weight=8, color='blue', opacity=0.6).add_to(map)
+        else:
+            url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[0], latlist[0])
+            response = requests.get(url).json()
+            geometry = response["routes"][0]["geometry"]
+            route = polyline.decode(geometry)
+            folium.PolyLine(route, weight=8, color='red', opacity=0.6).add_to(map)
+    
     for i in range(n_nodes):
         folium.Marker(location=latlonlist[i], icon=folium.Icon(icon='play', color='green')).add_to(map)
 
-    map.save('gamap.html')
+    
+
+    map.save('gamap2.html')
 
 
 
