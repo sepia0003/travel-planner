@@ -23,7 +23,7 @@ class Node:
 
 
 class NodeStorage:
-    storage = []                         # storage = [city1(obj), city2(obj), ...]
+    storage = []                         # storage = [node1(obj), node2(obj), ...]
 
     def addnode(self, node):
         self.storage.append(node)
@@ -38,7 +38,7 @@ class NodeStorage:
 class Tour:
     def __init__(self, nodestorage):
         self.nodestorage = nodestorage
-        self.tour = []                  # tour = [visitcity1(obj), visitcity2(obj), ...]
+        self.tour = []                  # tour = [visitnode1(obj), visitnode2(obj), ...]
         self.fitness = 0.0              # fitness would be value which indicates how well "the tour" fits
         self.tourdistance = 0
         for i in range(0, self.nodestorage.storagesize()):
@@ -179,7 +179,7 @@ class GeneticAlgo:
 
     def mutate(self, tour):
         for touridx1 in range(0, tour.toursize()):
-            if random.random() < self.mutationrate:     # with little probablility, exchange nodes in the tour
+            if random.random() < self.mutationrate:     # with a little probablility, exchange nodes in the tour
                 touridx2 = int(tour.toursize() * random.random())
 
                 node1 = tour.getnode(touridx1)
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
 
-    result = population.getmostfit().tour # result = [city, city, city, city, ...]
+    result = population.getmostfit().tour # result = [node, node, node, node, ...]
 
     # make map with this result
     lonlist = []
