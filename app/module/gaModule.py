@@ -191,7 +191,7 @@ class GeneticAlgo:
     def selectmostfittour(self, somepopulation):
         temppopulation = Population(self.nodestorage, self.parentcandsize, False)
 
-        for i in range(0, self.parentcandsize):
+        for i in range(0, self.parentcandsize):         # randomly select 5 parentcand on previous population, and regard them as temppopulation, and get mostfit parent on it.
             randpopidx = int(random.random() * somepopulation.populationsize())
             temppopulation.savetour(i, somepopulation.gettour(randpopidx)) # temppopulation can be like [tour5, tour5, tour2, tour1, tour8]
 
