@@ -132,7 +132,10 @@ class Population:
         return self.tours[index]
 
     def getmostfit(self):
-        mostfit = self.tours[0]
+        try:
+            mostfit = self.tours[0]
+        except:
+            mostfit = None
         
         for i in range(self.populationsize()):
             if mostfit.getfitness() <= self.gettour(i).getfitness():
@@ -232,16 +235,27 @@ if __name__ == '__main__':
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721)) # TUS
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789)) # gatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930)) # shinagawa
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=700)) # TUS
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=540, close=700)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=540, close=700)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=540, close=700)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=540, close=700)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=540, close=700)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=540, close=700)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=540, close=700)) # hatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=540, close=700)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, open=540, close=700)) # shinagawa
+    # result should be: (unit=M) (speed=80M/min) (timewindowunit=min)
+    # [shinagawa]                       540~570   
+    # 4900 [moritower]      61.25min    600~700
+    # 6200 [TUS]            77.5        650~750
+    # 4200 [shinanomachi]   52.5        700~800
+    # 2200 [yoyogi]         27.5        700~800
+    # 2000 [hatsudai]       25          750~850
+    # 4900 [nakano]         61.25       800~900
+    # 10300 [kichijoji]     128.75      950~1000
+    # 11300 [shimokita]     141.25      1100~1200
+    # 6900 [ebisu]          86.25       1150~1250
     
     population = Population(nodestorage, populationsize=populationsize, init=True)
     geneticalgo = GeneticAlgo(nodestorage)
@@ -249,8 +263,19 @@ if __name__ == '__main__':
     # evolve
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
+    # delete tours which do not fit with timewindow
+    for i in range(0, population.populationsize()):
+            timenow = 540
+            for j in range(0, nodestorage.storagesize()-1):
+                if population[i][j].open() <= timenow < population[i][j].close():
+                    timenow += population[i][j].timeTo(population[i][j+1]) 
+                else:
+                    population.tours.pop(i)
+                    break
 
     result = population.getmostfit().tour # result = [node, node, node, node, ...]
+    if result == None:
+        print("there is no suitable route")
 
     # make map with this result
     lonlist = []
