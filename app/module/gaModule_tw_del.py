@@ -160,7 +160,13 @@ class GeneticAlgo:
             elitismoffset = 1
 
         for i in range(0, oldpopulation.populationsize()):
-            oldpopulation[i]#tour 
+            timenow = 540 # unit=min, assume that traveler starts from one of Nodes
+            for j in range(0, nodestorage.storagesize()-1):
+                if oldpopulation[i][j].open() <= timenow < oldpopulation[i][j].close():
+                    timenow += oldpopulation[i][j].timeTo(oldpopulation[i][j+1]) 
+                else:
+                    oldpopulation.tours.pop(i)
+                    break
         
         for i in range(elitismoffset, newpopulation.populationsize()):
             parent1 = self.selectmostfittour(oldpopulation)
