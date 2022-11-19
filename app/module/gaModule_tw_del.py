@@ -132,10 +132,7 @@ class Population:
         return self.tours[index]
 
     def getmostfit(self):
-        try:
-            mostfit = self.tours[0]
-        except:
-            mostfit = None
+        mostfit = self.tours[0]
         
         for i in range(self.populationsize()):
             if mostfit.getfitness() <= self.gettour(i).getfitness():
@@ -162,14 +159,21 @@ class GeneticAlgo:
             newpopulation.savetour(0, oldpopulation.getmostfit())
             elitismoffset = 1
 
+        print('size:', oldpopulation.populationsize())
+        tempNonecnt = 0
         for i in range(0, oldpopulation.populationsize()):
             timenow = 540 # unit=min, assume that traveler starts from one of Nodes
+            print('initiate {}'.format(i))
             for j in range(0, nodestorage.storagesize()-1):
-                if oldpopulation[i][j].open() <= timenow < oldpopulation[i][j].close():
+                if oldpopulation[i][j].open <= timenow < oldpopulation[i][j].close:
                     timenow += oldpopulation[i][j].timeTo(oldpopulation[i][j+1]) 
                 else:
-                    oldpopulation.tours.pop(i)
+                    oldpopulation[i] = None
+                    tempNonecnt += 1
                     break
+        for i in range(tempNonecnt):
+            oldpopulation.tours.remove(None)
+
         
         for i in range(elitismoffset, newpopulation.populationsize()):
             parent1 = self.selectmostfittour(oldpopulation)
@@ -235,16 +239,16 @@ if __name__ == '__main__':
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=700)) # TUS
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=540, close=700)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=540, close=700)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=540, close=700)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=540, close=700)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=540, close=700)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=540, close=700)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=540, close=700)) # hatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=540, close=700)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, open=540, close=700)) # shinagawa
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=570)) # TUS
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=600, close=700)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=650, close=750)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=700, close=800)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=700, close=800)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=750, close=850)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=800, close=900)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=950, close=1000)) # hatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=1100, close=1200)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, open=1150, close=1250)) # shinagawa
     # result should be: (unit=M) (speed=80M/min) (timewindowunit=min)
     # [shinagawa]                       540~570   
     # 4900 [moritower]      61.25min    600~700
@@ -307,7 +311,7 @@ if __name__ == '__main__':
 
     
 
-    map.save('gamap2.html')
+    map.save('gamap_tw_del.html')
 
 
 
