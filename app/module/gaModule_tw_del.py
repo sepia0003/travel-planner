@@ -173,6 +173,8 @@ class GeneticAlgo:
                     break
         for i in range(tempNonecnt):
             oldpopulation.tours.remove(None)
+        if oldpopulation.populationsize() == 0:
+            print("ERROR: there is no tour in population anymore")
 
         
         for i in range(elitismoffset, newpopulation.populationsize()):
@@ -239,15 +241,15 @@ if __name__ == '__main__':
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=570)) # TUS
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=600, close=700)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=650, close=750)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=700, close=800)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=700, close=800)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=750, close=850)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=800, close=900)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=950, close=1000)) # hatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=1100, close=1200)) # kichijoji
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=1250)) # TUS
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=600, close=1250)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=650, close=1250)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=700, close=1250)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=700, close=1250)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=750, close=1250)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=800, close=1250)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=950, close=1250)) # hatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=1100, close=1250)) # kichijoji
     nodestorage.addnode(Node(lon=139.736571, lat=35.628930, open=1150, close=1250)) # shinagawa
     # result should be: (unit=M) (speed=80M/min) (timewindowunit=min)
     # [shinagawa]                       540~570   
@@ -319,3 +321,6 @@ if __name__ == '__main__':
     # 1. 거리일정하게 유지한뒤 time window에 안맞는 루트 삭제
     # 2. 거리를 풀어준뒤 time window에 안맞으면 패널티 부과해서 유전알고리즘
     # 3. 거리와 시간 둘다 유전알고리즘 적용
+
+    # del으로는 투어가 population에 안남는 문제발생
+    # 평가함수를 변경할 필요가 있음 패널티부여
