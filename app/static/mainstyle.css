@@ -1,0 +1,53 @@
+.sidebar{
+    background: lightblue;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    height: 100%;
+    padding: 20px 0;
+    transition: all 0.5s ease;
+}
+
+.insidebar{
+    background: lightgreen;
+    position: fixed;
+    top: 100;
+    left: 0;
+    width: 250px;
+    height: 60%;
+    padding: 20px 0;
+
+}
+
+.box{
+    box-sizing: border-box;
+    width: 200px;
+    height: 100px;
+    background-color: rgb(215, 215, 229);
+    /* position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: 0px; */
+    display: block;
+    float: left;
+
+    padding-left: 20px;
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+
+    border: 10px #000 solid;
+    border-radius: 0%;
+
+    /* margin-bottom: 50px; */
+}
+
+.box2{
+    width: 100px;
+    height: 100px;
+    background-color: rgb(215, 215, 229);
+    float: right;
+    float: left;
+    /* margin-top: 60px; */
+}
