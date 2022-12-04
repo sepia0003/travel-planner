@@ -19,4 +19,8 @@ mapdata/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 
-/app/module/testplace.py
+/app/static/t_mainstyle.css
+/app/static/t_image.png
+/app/static/t_sound.mp3
+/app/templates/t_index.html
+/app/Models/t_folder

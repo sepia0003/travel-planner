@@ -7,7 +7,7 @@
     top: 0;
     left: 0;
 
-    padding: 20px 20px;
+    padding: 0px 0px;
 
     transition: all 0.5s ease;
 }
@@ -15,7 +15,7 @@
 .mapscreen{
     width: 80%;
     height: 100%;
-    background-color: lightblue;
+    background-color: darkslategray;
 
     position: fixed;
     top: 0;
@@ -26,9 +26,33 @@
     transition: all 0.5s ease;
 }
 
-/* #aaaid{
-    border: 50px #000 solid;
-} */
+.inputbox{
+    padding: 0px;
+    border: 0px;
+    margin: 0px;
+}
+
+.inputblank{
+    width: 70px;
+    height: 30px;
+
+    border: none;
+
+    margin: -2px;
+}
+
+.submitblank{
+    width: 368px;
+    height: 30px;
+    background-color: yellowgreen;
+    display: block;
+
+    position: relative;
+    top: 5px;
+
+    border: none;
+
+}
 
 .test{
     display: block;
@@ -36,89 +60,4 @@
 
 
 
-/* 선택자, selector, 식별자, 별명 다 태그에대한 별명을 지칭하는것(id class name) */
-
-/* @media screen and (min-width: 768px){
-.box{
-    box-sizing: border-box;
-    width: 200px;
-    height: 100px;
-    background-color: rgba(215, 215, 229, 0.5);
-    display: block;
-    float: left;
-    *<div>, <h1>, <p>, <ul>, <ol>, <form>인 경우, position이 absolute fixed의 경우, float한경우 block으로 변함
-    *<span>, <a>, <img>의 경우 기본 inline으로 변함
-    *display밸류가 none이면 레이아웃에서 완전히 해당요소를 안보이게 할수 있음
-
-    position: absolute;
-    top: 10px;
-    left: 500px;
-    z-index: 2;
-
-    padding-left: 20px;
-    padding-top: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
-
-    border: 10px #000 solid;
-    border-radius: 0%;
-
-    /* margin-bottom: 50px; 
-
-    font-size: 1rem;
-    line-height: 1em;
-    letter-spacing: 2px;
-    font-family: "Poppins";
-    font-weight: 700;
-    color: rgba(241, 210, 54, 0.6);
-    text-align: left;
-    text-indent: 30px;
-    text-transform: lowercase;
-    text-decoration: none;
-    font-style: oblique;
-
-    /* transition: all 2500ms ease 200ms; */
-    /* animation-name: name;
-    animation-duration: 1000ms;
-    animation-timing-function: ease-in-out; */
-    /* animation-delay: 1000ms; 
-
-    box-shadow: 10px 20px 20px 0 rgba(218, 231, 49, 0.35);
-
-    transform: translate(100%, 50px);
-    transform: rotate(-10deg);
-
-    overflow: scroll;
-}
-}
-
-@keyframes name{
-    from{
-        top: 0;
-        background-color: blue;
-    }
-    to{
-        top: 200px;
-        background-color: red;
-    }
-} */
-
-/* .box2{
-    width: 500px;
-    height: 500px;
-    background-color: rgb(215, 215, 229);
-    background-image: url("https://w.namu.la/s/f866c3f404d35866333a161dc597507691e9d397f7f78e39de3a1f3669f185f4553543ebd06b4843359ca478f5f7655f60e2c0cd56ebd6bd5f0b31f2d4f25ad9453a0ac9eaf4c2ef585699bdf52d393d27a2540ffe3258db1b80b9bbc30c35b8c7d487a328a6173f4960d65e97f13798");
-    background-repeat: repeat;
-    background-position: right top;
-
-
-    position: fixed;
-    right: 600px;
-    z-index: 1;
-
-    float: right;
-
-
-    /* margin-top: 60px; 
-} */
 

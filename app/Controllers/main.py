@@ -5,9 +5,13 @@ bp = Blueprint('main', __name__, url_prefix='/')
 
 @bp.route('/', methods=['GET'])
 def main():
-    testdata = 'TESTING string'
-    return render_template('index.html', testdatahtml=testdata)
+    # testdata = request.form["qwerqwerq"]
+    return render_template('index.html')
 
+@bp.route('/result', methods=['POST'])
+def result():
+    testdata = request.form["qwerqwerq"]
+    return render_template('index.html', testdatahtml=testdata)
 
 
 
