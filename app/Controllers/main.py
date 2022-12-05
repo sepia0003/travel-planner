@@ -2,22 +2,28 @@ from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask import current_app as app
 
 bp = Blueprint('main', __name__, url_prefix='/')
+destlist = []
 
 @bp.route('/', methods=['GET'])
 def main():
     # testdata = request.form["qwerqwerq"]
     return render_template('index.html')
 
-@bp.route('/result', methods=['POST'])
-def result():
-    testdata = request.form["qwerqwerq"]
-    return render_template('index.html', testdatahtml=testdata)
+@bp.route('/inputing', methods=['POST'])
+def inputing():
+    try:
+        if request.form["resetflag"] == "초기화":
+            destlist.clear()
+        return render_template('index.html', destlist=destlist)
+    except:
+        destlist.append(request.form["lon"])
+        return render_template('index.html', destlist=destlist)
 
 
 
 
 
-
+#주의 request.form으로 받아오는 값들은 모두 str이다.
 
 
 
