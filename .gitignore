@@ -24,4 +24,6 @@ mapdata/
 /app/static/t_sound.mp3
 /app/templates/t_index.html
 /app/Models/t_folder
+/app/Models/t_dbModule.py
+/app/Models/t_gaModule.py
 /.vscode

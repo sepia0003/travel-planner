@@ -2,8 +2,8 @@ import pymysql
 
 class Database:
     def __init__(self):
-        self.db = pymysql.connect(host='localhost', user='root', password='test1234', db='testdb', charset='utf8')
-        self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
+        self.conn = pymysql.connect(host='localhost', user='root', password='test1234', db='testdb', charset='utf8')
+        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
 
     def execute(self, query, args={}):
         self.cursor.execute(query, args)
