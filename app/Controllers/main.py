@@ -1,29 +1,49 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask import current_app as app
+from ..Models.dbModule import Database
 
 bp = Blueprint('main', __name__, url_prefix='/')
-destlist = []
+db = Database()
+try: db.maketable("locationtable")
+except: pass
 
 @bp.route('/', methods=['GET'])
 def main():
-    # testdata = request.form["qwerqwerq"]
     return render_template('index.html')
 
 @bp.route('/inputing', methods=['POST'])
 def inputing():
     try:
         if request.form["resetflag"] == "초기화":
-            destlist.clear()
+            db.resetlocationlist()
+            destlist = db.getlocationlist() #get은 [[1row의values], [2row의values]]
         return render_template('index.html', destlist=destlist)
     except:
-        destlist.append(request.form["lon"])
+        db.addlocation(tuple(request.form.values())) #튜플형태로 반환해줘야함
+        destlist = db.getlocationlist()
         return render_template('index.html', destlist=destlist)
 
 
 
 
+#request.form은 html에서 input태그내의 name키에해당하는밸류, value키에해당하는밸류
+#이 두가지 밸류를 각각 가져와서
+#name키에해당하는밸류를 request.form내부의 하나의새로운키로
+#value키에해당하는밸류를 그 새로만들어진키의 밸류로 각각대응시켜서
+#request.form자체가 딕셔너리로서 기능하게된다.
+#딕셔너리요소의 개수는 html안의 form태그안 맨처음부터 submit태그가 있는곳까지 가져간다.
+#request.form이 딕셔너리로 기능하므로 당연히 .keys() .values() .items() 사용가능하다
+#리턴값이 딕셔너리와 완전히 같은형식의 특별한 리스트로 나오게된다.
+#list()로 겉의특별한[]를 평범한[]로 바꿔줄수있다. 혹은 tuple()로 ()로 바꿔줄수도있다.
 
-#주의 request.form으로 받아오는 값들은 모두 str이다.
+#주의 html의 모든 밸류는 "~~"이었다 
+#즉, name키에해당하는밸류도 str이고 value키에해당하는밸류도 str이다
+#따라서 request.form내에 저장된 모든 키밸류들은 str이다.
+#request.form["lon"]등으로 써야한다는것
+
+#타입 <class 'werkzeug.datastructures.ImmutableMultiDict'>   
+#내용 ImmutableMultiDict([('lon', '1232'), ('lan', '12321'), 
+# ('util', '5678'), ('open', '11:03'), ('close', '02:03')])
 
 
 
