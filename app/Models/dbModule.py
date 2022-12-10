@@ -4,8 +4,10 @@ class Database:
     def __init__(self):
         self.conn = pymysql.connect(host='localhost', user='root', password='test1234', db='travel_planner_db', charset='utf8')
         self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+        # 위conn은 유저와 어떤 database를 쓸지를 이미 대응시킨상태
+        # 따라서 cmd에서 명령어치는것처럼 db명.table명으로 안쓰고바로 table명을 써도됨
 
-    def maketable(self, tablename): #database(schema)안에 여러개의 table이 있는형태
+    def maketable(self, tablename):
         query = '''
             CREATE TABLE {}(
                 id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -47,11 +49,16 @@ class Database:
         self.cursor.execute(query)
         self.conn.commit()
 
-    def closedb(self):
+    def closeconn(self):
         self.conn.close()
        
 
 
+
+# 유저(아이디+아이피+비번) 따로만들고
+# database들과 그안의 table들을 따로만들고
+# 유저와 database.table 을 대응시키는것
+# *schema는 database와 같은말
 
 # Database의 객체만 만들면 서버생성,커서생성 자동으로해주고
 # 커서에명령어입력하는것만 따로 떼어낸 클래스임
