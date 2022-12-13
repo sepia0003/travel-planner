@@ -5,9 +5,11 @@ import folium
 import random
 
 class Node:
-    def __init__(self, lon=None, lat=None, open=None ,close=None): # open, close should be in min
+    def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None): # open, close should be in min
         self.lon = lon
         self.lat = lat
+        self.util = util
+        self.stay = stay
         self.open = open
         self.close = close
 
@@ -16,6 +18,12 @@ class Node:
     
     def getlat(self):
         return self.lat
+
+    def getutil(self):
+        return self.util
+
+    def getstay(self):
+        return self.stay
 
     def getopen(self):
         return self.open
