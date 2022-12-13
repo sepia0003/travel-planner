@@ -5,9 +5,10 @@ import folium
 import random
 
 class Node:
-    def __init__(self, lon=None, lat=None, open=None ,close=None): # open, close should be in min
+    def __init__(self, lon=None, lat=None, util=None, open=None ,close=None): # open, close should be in min
         self.lon = lon
         self.lat = lat
+        self.util = util
         self.open = open
         self.close = close
 
@@ -17,24 +18,26 @@ class Node:
     def getlat(self):
         return self.lat
 
+    def getutil(self):
+        return self.util
+
     def getopen(self):
         return self.open
 
     def getclose(self):
         return self.close
 
-    def distanceTo(self, dest): #lon,lat ~ lon,lat
-        url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(self.getlon(), self.getlat(), dest.getlon(), dest.getlat())
-        response = requests.get(url).json()
-        distance = response["routes"][0]["distance"] # unit=M
+    def distanceTo(self, dest): #lon,lat ~ lon,lat, we use manhattan distance for brief test.
+        distance = 0            #unit = °, we don't use min'sec" only degree.
+        distance += abs(self.getlon() - dest.getlon())
+        distance += abs(self.getlat() - dest.getlat())
         return distance
 
     def timeTo(self, dest):
-        url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(self.getlon(), self.getlat(), dest.getlon(), dest.getlat())
-        response = requests.get(url).json()
-        distance = response["routes"][0]["distance"] # unit=M
-        timecost = distance / 80    # we assume that speed of pedestrian is 80M/min.
-        return timecost
+        walkspeed = 0.00070125  #unit = °/min = 0.002805°/4min (walkspeed of a normal person)
+        distance = self.distanceTo(dest)
+        time = distance / walkspeed 
+        return time
 
 
 class NodeStorage:
@@ -159,24 +162,6 @@ class GeneticAlgo:
             newpopulation.savetour(0, oldpopulation.getmostfit())
             elitismoffset = 1
 
-        print('size:', oldpopulation.populationsize())
-        tempNonecnt = 0
-        for i in range(0, oldpopulation.populationsize()):
-            timenow = 540 # unit=min, assume that traveler starts from one of Nodes
-            print('initiate {}'.format(i))
-            for j in range(0, nodestorage.storagesize()-1):
-                if oldpopulation[i][j].open <= timenow < oldpopulation[i][j].close:
-                    timenow += oldpopulation[i][j].timeTo(oldpopulation[i][j+1]) 
-                else:
-                    oldpopulation[i] = None
-                    tempNonecnt += 1
-                    break
-        for i in range(tempNonecnt):
-            oldpopulation.tours.remove(None)
-        if oldpopulation.populationsize() == 0:
-            print("ERROR: there is no tour in population anymore")
-
-        
         for i in range(elitismoffset, newpopulation.populationsize()):
             parent1 = self.selectmostfittour(oldpopulation)
             parent2 = self.selectmostfittour(oldpopulation)
@@ -241,27 +226,16 @@ if __name__ == '__main__':
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, open=540, close=1250)) # TUS
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, open=600, close=1250)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, open=650, close=1250)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, open=700, close=1250)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, open=700, close=1250)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, open=750, close=1250)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, open=800, close=1250)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, open=950, close=1250)) # hatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, open=1100, close=1250)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, open=1150, close=1250)) # shinagawa
-    # result should be: (unit=M) (speed=80M/min) (timewindowunit=min)
-    # [shinagawa]                       540~570   
-    # 4900 [moritower]      61.25min    600~700
-    # 6200 [TUS]            77.5        650~750
-    # 4200 [shinanomachi]   52.5        700~800
-    # 2200 [yoyogi]         27.5        700~800
-    # 2000 [hatsudai]       25          750~850
-    # 4900 [nakano]         61.25       800~900
-    # 10300 [kichijoji]     128.75      950~1000
-    # 11300 [shimokita]     141.25      1100~1200
-    # 6900 [ebisu]          86.25       1150~1250
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721)) # TUS
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789)) # gatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930)) # shinagawa
     
     population = Population(nodestorage, populationsize=populationsize, init=True)
     geneticalgo = GeneticAlgo(nodestorage)
@@ -269,19 +243,8 @@ if __name__ == '__main__':
     # evolve
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
-    # delete tours which do not fit with timewindow
-    for i in range(0, population.populationsize()):
-            timenow = 540
-            for j in range(0, nodestorage.storagesize()-1):
-                if population[i][j].open() <= timenow < population[i][j].close():
-                    timenow += population[i][j].timeTo(population[i][j+1]) 
-                else:
-                    population.tours.pop(i)
-                    break
 
     result = population.getmostfit().tour # result = [node, node, node, node, ...]
-    if result == None:
-        print("there is no suitable route")
 
     # make map with this result
     lonlist = []
@@ -313,7 +276,7 @@ if __name__ == '__main__':
 
     
 
-    map.save('gamap_tw_del.html')
+    map.save('gamap2.html')
 
 
 
@@ -321,6 +284,3 @@ if __name__ == '__main__':
     # 1. 거리일정하게 유지한뒤 time window에 안맞는 루트 삭제
     # 2. 거리를 풀어준뒤 time window에 안맞으면 패널티 부과해서 유전알고리즘
     # 3. 거리와 시간 둘다 유전알고리즘 적용
-
-    # del으로는 투어가 population에 안남는 문제발생
-    # 평가함수를 변경할 필요가 있음 패널티부여
