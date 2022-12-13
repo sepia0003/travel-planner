@@ -5,13 +5,14 @@ import folium
 import random
 
 class Node:
-    def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None): # open, close should be in min
+    def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None): # stay, open, close should be in min
         self.lon = lon
         self.lat = lat
         self.util = util
         self.stay = stay
         self.open = open
         self.close = close
+        self.alpha = 1
 
     def getlon(self):
         return self.lon
@@ -30,6 +31,9 @@ class Node:
 
     def getclose(self):
         return self.close
+
+    def getalpha(self):
+        return self.alpha
 
     def distanceTo(self, dest): #lon,lat ~ lon,lat, we use manhattan distance for brief test.
         distance = 0            #unit = °, we don't use min'sec" only degree.
@@ -62,6 +66,8 @@ class Tour:
         self.nodestorage = nodestorage
         self.tour = []                  # tour = [visitnode1(obj), visitnode2(obj), ...]
         self.fitness = 0.0              # fitness would be value which indicates how well "the tour" fits
+        self.tourutil = 0
+        self.tourtwmiss = 0
         self.tourdistance = 0
         for i in range(0, self.nodestorage.storagesize()):
             self.tour.append(None)
@@ -81,6 +87,8 @@ class Tour:
     def setnode(self, key, value):
         self.tour[key] = value
         self.fitness = 0.0
+        self.tourutil = 0
+        self.tourtwmiss = 0
         self.tourdistance = 0
 
     def toursize(self):
@@ -91,10 +99,56 @@ class Tour:
             self.setnode(i, self.nodestorage.getnode(i))
         random.shuffle(self.tour)
     
-    def getfitness(self):
+    def getfitness(self):                                     
         if self.fitness == 0:
-            self.fitness = 1/float(self.gettourdistance())
+            self.fitness = self.gettourutil() - self.gettourtwmiss() - self.gettourdistance()         # the evaluation function of the problem
         return self.fitness
+
+    def gettourutil(self):
+        if self.tourutil == 0:
+            allutil = 0
+            currenttime = self.getnode(0).getopen()
+            for i in range(0, self.toursize()):
+                frompoint = self.getnode(i)
+                topoint = None
+                if i+1 < self.toursize():
+                    topoint = self.getnode(i+1)
+                else:
+                    topoint = self.getnode(0)
+                if frompoint.getopen() <= currenttime <= frompoint.getclose():
+                    allutil += frompoint.getutil()
+                    currenttime += frompoint.getstay()
+                    currenttime += frompoint.timeTo(topoint)
+                else:
+                    currenttime += frompoint.timeTo(topoint)
+            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose():
+                allutil += self.getnode(0).getutil()
+            else:
+                pass
+        return allutil
+
+    def gettourtwmiss(self):
+        if self.tourtwmiss == 0:
+            alltwmiss = 0
+            currenttime = self.getnode(0).getopen() #min
+            for i in range(0, self.toursize()):
+                frompoint = self.getnode(i)
+                topoint = None
+                if i+1 < self.toursize():
+                    topoint = self.getnode(i+1)
+                else:
+                    topoint = self.getnode(0)
+                if frompoint.getopen() <= currenttime <= frompoint.getclose():
+                    currenttime += frompoint.getstay()
+                    currenttime += frompoint.timeTo(topoint)
+                else:
+                    alltwmiss += frompoint.getalpha() * min(abs(currenttime - frompoint.getopen()), abs(currenttime - frompoint.getclose()))
+                    currenttime += frompoint.timeTo(topoint)
+            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose():
+                pass
+            else:
+                alltwmiss += self.getnode(0).getalpha() * min(abs(currenttime - self.getnode(0).getopen()), abs(currenttime - self.getnode(0).getclose()))
+        return alltwmiss
 
     def gettourdistance(self):
         if self.tourdistance == 0:
@@ -105,7 +159,7 @@ class Tour:
                 if i+1 < self.toursize():
                     topoint = self.getnode(i+1)
                 else:
-                    topoint = self.getnode(0)
+                    topoint = self.getnode(0)                   # in this project, we regard a route as a closed route. we come back to start point.
                 alldistance += frompoint.distanceTo(topoint)
             self.tourdistance = alldistance
         return self.tourdistance
