@@ -120,6 +120,7 @@ class Tour:
     def gettourutil(self):
         if self.tourutil == 0:
             allutil = 0
+            # print('투어의길이:', len(self.tour))      #테스트
             currenttime = self.getnode(0).getopen()
             for i in range(0, self.toursize()):
                 frompoint = self.getnode(i)
@@ -223,11 +224,12 @@ class Population:
 
 
 class GeneticAlgo:
-    def __init__(self, nodestorage, mutationrate=0.05, parentcandsize=5, elitism=True):
+    def __init__(self, nodestorage, worstnum, mutationrate=0.05, parentcandsize=5, elitism=True):
         self.nodestorage = nodestorage
         self.mutationrate = mutationrate
         self.parentcandsize = parentcandsize
         self.elitism = elitism
+        self.worstnum = worstnum
 
     def evolvepopulation(self, oldpopulation):
         self.cleanup(oldpopulation)
@@ -256,10 +258,10 @@ class GeneticAlgo:
             temptour = oldpopulation.gettour(i)
             currenttime = temptour.getnode(0).getopen() #pop을 구성하는 각 투어에서 맨앞에노드의open시간
             for j in range(0, temptour.toursize()):
-                frompoint = temptour.getnode(i)
+                frompoint = temptour.getnode(j)
                 topoint = None
-                if i+1 < temptour.toursize():
-                    topoint = temptour.getnode(i+1)
+                if j+1 < temptour.toursize():
+                    topoint = temptour.getnode(j+1)
                 else:
                     topoint = temptour.getnode(0)
                 if frompoint.getopen() <= currenttime <= frompoint.getclose(): #tw안이면
@@ -278,10 +280,9 @@ class GeneticAlgo:
             ele.alpha += 1
         
         bannodes = []
-        worstnum = 50
         for i in range(0, self.nodestorage.storagesize()):
             tempnode = self.nodestorage.getnode(i)
-            if (tempnode.getalpha() >= worstnum) and (tempnode not in bannodes):
+            if (tempnode.getalpha() >= self.worstnum) and (tempnode not in bannodes):
                 bannodes.append(tempnode)
         for ele in bannodes:    
             self.nodestorage.delnode(ele)
@@ -315,7 +316,7 @@ class GeneticAlgo:
             for commondiff in range(0, parent1.toursize()):
                 portionend = portionstart + commondiff
                 if portionend >= parent1.toursize():
-                    portionend -= parent1.tousize()
+                    portionend -= parent1.toursize()
                 historynode.append(parent1.getnode(portionend))
                 route = Tour(self.nodestorage, True)
                 route.tour = historynode
@@ -360,65 +361,105 @@ if __name__ == '__main__':
     n_nodes = 10
     populationsize = 50
     n_generation = 100
+    worstnum = 90
 
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, util=50, stay=90, open=480, close=1020)) # TUS 8~17(hour)
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, util=50, stay=90, open=480, close=1020)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, util=50, stay=90, open=480, close=1020)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, util=50, stay=90, open=480, close=1020)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, util=50, stay=90, open=480, close=1020)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, util=50, stay=90, open=480, close=1020)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, util=50, stay=90, open=480, close=1020)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, util=50, stay=90, open=480, close=1020)) # gatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, util=50, stay=90, open=480, close=1020)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, util=50, stay=90, open=480, close=1020)) # shinagawa
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, util=3000000, stay=9, open=480, close=1020)) # TUS 8~17(hour)
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, util=50, stay=9, open=480, close=1020)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, util=50, stay=9, open=480, close=1020)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, util=50, stay=9, open=480, close=1020)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, util=50, stay=9, open=480, close=1020)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, util=50, stay=9, open=480, close=1020)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, util=50, stay=9, open=480, close=1020)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, util=50, stay=9, open=480, close=1020)) # gatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, util=50, stay=9, open=480, close=1020)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, util=50, stay=9, open=480, close=1020)) # shinagawa
     
     population = Population(nodestorage, populationsize=populationsize, init=True)
-    geneticalgo = GeneticAlgo(nodestorage)
+    geneticalgo = GeneticAlgo(nodestorage, worstnum)
 
     # evolve
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
+        for j in nodestorage.storage:       #테스트
+            print(j.getalpha(), end='/')    #테스트
+        print('\n')                         #테스트
 
     result = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
-    # make map with this result
+    #테스트(이하전부)
+    import matplotlib.pyplot as plt
+
+    nodestorage_original = NodeStorage()
+    nodestorage_original.addnode(Node(lon=139.741424, lat=35.699721, util=50, stay=9, open=480, close=1020)) # TUS 8~17(hour)
+    nodestorage_original.addnode(Node(lon=139.728871, lat=35.661302, util=50, stay=9, open=480, close=1020)) # mori tower
+    nodestorage_original.addnode(Node(lon=139.714924, lat=35.643925, util=50, stay=9, open=480, close=1020)) # ebisu
+    nodestorage_original.addnode(Node(lon=139.701975, lat=35.682837, util=50, stay=9, open=480, close=1020)) # yoyogi
+    nodestorage_original.addnode(Node(lon=139.719525, lat=35.680659, util=50, stay=9, open=480, close=1020)) # shinanomachi
+    nodestorage_original.addnode(Node(lon=139.666109, lat=35.705378, util=50, stay=9, open=480, close=1020)) # nakano
+    nodestorage_original.addnode(Node(lon=139.668144, lat=35.661516, util=50, stay=9, open=480, close=1020)) # shimokitazawa
+    nodestorage_original.addnode(Node(lon=139.686511, lat=35.680789, util=50, stay=9, open=480, close=1020)) # gatsudai
+    nodestorage_original.addnode(Node(lon=139.579722, lat=35.702351, util=50, stay=9, open=480, close=1020)) # kichijoji
+    nodestorage_original.addnode(Node(lon=139.736571, lat=35.628930, util=50, stay=9, open=480, close=1020)) # shinagawa
+    original_lonlist = []
+    original_latlist = []
+    for i in nodestorage_original.storage:
+        original_lonlist.append(i.getlon())
+        original_latlist.append(i.getlat())
+    plt.scatter(original_lonlist, original_latlist)
+    plt.xlim([min(original_lonlist) - 0.001, max(original_lonlist) + 0.001])
+    plt.ylim([min(original_latlist) - 0.001, max(original_latlist) + 0.001])
+    
     lonlist = []
     latlist = []
-    latlonlist = []
     for i in result:
         lonlist.append(i.getlon())
         latlist.append(i.getlat())
-        latlonlist.append((i.getlat(), i.getlon()))
-
-    map = folium.Map(location=[sum(latlist)/10, sum(lonlist)/10], zoom_start=13)
-
-    for i in range(n_nodes):
-        if i != n_nodes-1:
-            url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[i+1], latlist[i+1])
-            response = requests.get(url).json()
-            geometry = response["routes"][0]["geometry"]
-            route = polyline.decode(geometry)
-            folium.PolyLine(route, weight=8, color='blue', opacity=0.6).add_to(map)
+    for i in range(0, len(result)):    
+        if i+1<len(result):
+            plt.plot([lonlist[i], lonlist[i+1]], [latlist[i], latlist[i+1]], color="blue")
+            plt.text(lonlist[i], latlist[i], '{}'.format(i))
         else:
-            url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[0], latlist[0])
-            response = requests.get(url).json()
-            geometry = response["routes"][0]["geometry"]
-            route = polyline.decode(geometry)
-            folium.PolyLine(route, weight=8, color='red', opacity=0.6).add_to(map)
+            plt.plot([lonlist[i], lonlist[0]], [latlist[i], latlist[0]], color='red')
+            plt.text(lonlist[i], latlist[i], '{}'.format(i))
+
+    plt.savefig('map(gaModlue_tw_md_alpha).png')
+
+
+    # 아마 한세대끝날때마다 tw위반하는노드의 알파를 하나씩올리는데 그게 모든 노드에서 다 그렇게되는듯
+    # 아니다 잘 작동하는데 timeto 거리 걸리는시간때문에 올라갔던것
     
-    for i in range(n_nodes):
-        folium.Marker(location=latlonlist[i], icon=folium.Icon(icon='play', color='green')).add_to(map)
+
+    # make map with this result
+    # lonlist = []
+    # latlist = []
+    # latlonlist = []
+    # for i in result:
+    #     lonlist.append(i.getlon())
+    #     latlist.append(i.getlat())
+    #     latlonlist.append((i.getlat(), i.getlon()))
+
+    # map = folium.Map(location=[sum(latlist)/10, sum(lonlist)/10], zoom_start=13)
+
+    # for i in range(n_nodes):
+    #     if i != n_nodes-1:
+    #         url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[i+1], latlist[i+1])
+    #         response = requests.get(url).json()
+    #         geometry = response["routes"][0]["geometry"]
+    #         route = polyline.decode(geometry)
+    #         folium.PolyLine(route, weight=8, color='blue', opacity=0.6).add_to(map)
+    #     else:
+    #         url = "http://localhost:5000/route/v1/driving/{},{};{},{}".format(lonlist[i], latlist[i], lonlist[0], latlist[0])
+    #         response = requests.get(url).json()
+    #         geometry = response["routes"][0]["geometry"]
+    #         route = polyline.decode(geometry)
+    #         folium.PolyLine(route, weight=8, color='red', opacity=0.6).add_to(map)
+    
+    # for i in range(n_nodes):
+    #     folium.Marker(location=latlonlist[i], icon=folium.Icon(icon='play', color='green')).add_to(map)
 
     
 
-    map.save('gamap2.html')
-
-
-
-
-    # 1. 거리일정하게 유지한뒤 time window에 안맞는 루트 삭제
-    # 2. 거리를 풀어준뒤 time window에 안맞으면 패널티 부과해서 유전알고리즘
-    # 3. 거리와 시간 둘다 유전알고리즘 적용
+    # map.save('gamap2.html')
