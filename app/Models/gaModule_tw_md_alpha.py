@@ -57,35 +57,48 @@ class NodeStorage:
     def getnode(self, index):
         return self.storage[index]
 
+    def delnode(self, value):
+        self.storage.remove(value)      #remove는 리스트의 인덱스로 찾아서 지우는게 아니라 리스트의 밸류로 찾아서 지우는것이다.
+
     def storagesize(self):
         return len(self.storage)
 
 
 class Tour:
-    def __init__(self, nodestorage):
+    def __init__(self, nodestorage, portion): #false가 평소에 쓰는것 , 특별히 true일때는 초기화할때나 특별한경우
         self.nodestorage = nodestorage
         self.tour = []                  # tour = [visitnode1(obj), visitnode2(obj), ...]
         self.fitness = 0.0              # fitness would be value which indicates how well "the tour" fits
         self.tourutil = 0
         self.tourtwmiss = 0
         self.tourdistance = 0
-        for i in range(0, self.nodestorage.storagesize()):
-            self.tour.append(None)
+        self.portion = portion
+        if not self.portion:
+            for i in range(0, self.nodestorage.storagesize()):          #ns:Tour에서는 처음에 객체생성시 인수로받아온nodestorage안의 노드개수만큼공간만들고 시작
+                self.tour.append(None)
 
-    def __len__(self):
-        return len(self.tour)
+    # def __len__(self):                  # len()함수
+    #     return len(self.tour)
 
-    def __setitem__(self, key, value):
-        self.tour[key] = value
+    # def __setitem__(self, key, value):  # tour[key] = value 메소드
+    #     self.tour[key] = value
     
-    def __getitem__(self, index):
-        return self.tour[index]
+    # def __getitem__(self, index):       # tour[key] 호출 메소드
+    #     return self.tour[index]         # __~~__ 같은 매직메소드는 get,set,del,len(겟셋끼들은)이 있다. 하지만 리스트 조작이랑 헷갈려서 굳이 안쓰기로 결정  
+                                          # 참고로 index는 key의 일종이다.
 
     def getnode(self, index):
         return self.tour[index]
 
-    def setnode(self, key, value):
-        self.tour[key] = value
+    def setnode(self, index, value):
+        self.tour[index] = value
+        self.fitness = 0.0
+        self.tourutil = 0
+        self.tourtwmiss = 0
+        self.tourdistance = 0
+
+    def delnode(self, value):
+        self.tour.remove(value)
         self.fitness = 0.0
         self.tourutil = 0
         self.tourtwmiss = 0
@@ -94,8 +107,8 @@ class Tour:
     def toursize(self):
         return len(self.tour)
 
-    def generatetour(self):
-        for i in range(0, self.nodestorage.storagesize()):
+    def inittour(self):
+        for i in range(0, self.nodestorage.storagesize()):      #ns:해당객체에 저장된 ns의 사이즈만큼의 투어를 만드는역할
             self.setnode(i, self.nodestorage.getnode(i))
         random.shuffle(self.tour)
     
@@ -121,11 +134,12 @@ class Tour:
                     currenttime += frompoint.timeTo(topoint)
                 else:
                     currenttime += frompoint.timeTo(topoint)
-            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose():
+            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose() and not self.portion:
                 allutil += self.getnode(0).getutil()
             else:
                 pass
-        return allutil
+            self.tourutil = allutil
+        return self.tourutil
 
     def gettourtwmiss(self):
         if self.tourtwmiss == 0:
@@ -146,9 +160,10 @@ class Tour:
                     currenttime += frompoint.timeTo(topoint)
             if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose():
                 pass
-            else:
+            elif not self.portion:
                 alltwmiss += self.getnode(0).getalpha() * min(abs(currenttime - self.getnode(0).getopen()), abs(currenttime - self.getnode(0).getclose()))
-        return alltwmiss
+            self.tourtwmiss = alltwmiss    
+        return self.tourtwmiss
 
     def gettourdistance(self):
         if self.tourdistance == 0:
@@ -161,6 +176,8 @@ class Tour:
                 else:
                     topoint = self.getnode(0)                   # in this project, we regard a route as a closed route. we come back to start point.
                 alldistance += frompoint.distanceTo(topoint)
+            if self.portion:
+                alldistance -= frompoint.distanceTo(topoint)
             self.tourdistance = alldistance
         return self.tourdistance
 
@@ -176,30 +193,30 @@ class Population:
         
         if init:
             for i in range(0, populationsize):
-                newtour = Tour(nodestorage)
-                newtour.generatetour()
-                self.savetour(i, newtour)
+                newtour = Tour(nodestorage, False)             #ns:population에서는 단순히 맨처음population일때 해당pop으로서 쓰일 랜덤순서의투어들을 만드는역할 
+                newtour.inittour()
+                self.settour(i, newtour)
         
-    def __setitem__(self, key, value):
-        self.tours[key] = value
+    # def __setitem__(self, key, value):
+    #     self.tours[key] = value
 
-    def __getitem__(self, index):
-        return self.tours[index]
+    # def __getitem__(self, index):
+    #     return self.tours[index]
     
-    def savetour(self, index, tour):
-        self.tours[index] = tour
-
     def gettour(self, index):
         return self.tours[index]
 
-    def getmostfit(self):
-        mostfit = self.tours[0]
+    def settour(self, index, tour):
+        self.tours[index] = tour
+
+    def getmostfittour(self):
+        mostfittour = self.tours[0]
         
         for i in range(self.populationsize()):
-            if mostfit.getfitness() <= self.gettour(i).getfitness():
-                mostfit = self.gettour(i)
+            if mostfittour.getfitness() <= self.gettour(i).getfitness():
+                mostfittour = self.gettour(i)
 
-        return mostfit
+        return mostfittour
 
     def populationsize(self):
         return len(self.tours)
@@ -213,40 +230,114 @@ class GeneticAlgo:
         self.elitism = elitism
 
     def evolvepopulation(self, oldpopulation):
+        self.cleanup(oldpopulation)
+
         newpopulation = Population(self.nodestorage, oldpopulation.populationsize(), False)
 
         elitismoffset = 0
         if self.elitism:
-            newpopulation.savetour(0, oldpopulation.getmostfit())
+            newpopulation.settour(0, oldpopulation.getmostfittour())
             elitismoffset = 1
 
-        for i in range(elitismoffset, newpopulation.populationsize()):
-            parent1 = self.selectmostfittour(oldpopulation)
-            parent2 = self.selectmostfittour(oldpopulation)
+        for i in range(elitismoffset, oldpopulation.populationsize()):
+            parent1 = self.makecandselectone(oldpopulation)
+            parent2 = self.makecandselectone(oldpopulation)
             child = self.crossover(parent1, parent2)
-            newpopulation.savetour(i, child)
+            newpopulation.settour(i, child)
 
-        for i in range(elitismoffset, newpopulation.populationsize()):
+        for i in range(elitismoffset, oldpopulation.populationsize()):
             self.mutate(newpopulation.gettour(i))
         
         return newpopulation
 
+    def cleanup(self, oldpopulation):
+        alphaupnodes = []
+        for i in range(0, oldpopulation.populationsize()):
+            temptour = oldpopulation.gettour(i)
+            currenttime = temptour.getnode(0).getopen() #pop을 구성하는 각 투어에서 맨앞에노드의open시간
+            for j in range(0, temptour.toursize()):
+                frompoint = temptour.getnode(i)
+                topoint = None
+                if i+1 < temptour.toursize():
+                    topoint = temptour.getnode(i+1)
+                else:
+                    topoint = temptour.getnode(0)
+                if frompoint.getopen() <= currenttime <= frompoint.getclose(): #tw안이면
+                    currenttime += frompoint.getstay()
+                    currenttime += frompoint.timeTo(topoint)
+                else: #tw밖이면
+                    if frompoint not in alphaupnodes:
+                        alphaupnodes.append(frompoint)
+                    currenttime += frompoint.timeTo(topoint)
+            if temptour.getnode(0).getopen() <= currenttime <= temptour.getnode(0).getclose():
+                pass #처음시작위치로 돌아왔을때 tw내부일때
+            else: #tw밖일때
+                if temptour.getnode(0) not in alphaupnodes:
+                    alphaupnodes.append(temptour.getnode(0))
+        for ele in alphaupnodes:
+            ele.alpha += 1
+        
+        bannodes = []
+        worstnum = 50
+        for i in range(0, self.nodestorage.storagesize()):
+            tempnode = self.nodestorage.getnode(i)
+            if (tempnode.getalpha() >= worstnum) and (tempnode not in bannodes):
+                bannodes.append(tempnode)
+        for ele in bannodes:    
+            self.nodestorage.delnode(ele)
+            for i in range(0, oldpopulation.populationsize()):
+                oldpopulation.gettour(i).delnode(ele)
+
+        for i in range(0, oldpopulation.populationsize()):
+            _ = oldpopulation.gettour(i).getfitness()
+
+    def makecandselectone(self, oldpopulation):
+        temppopulation = Population(self.nodestorage, self.parentcandsize, False)
+
+        for i in range(0, self.parentcandsize):         # randomly select 5 parentcand on previous population, and regard them as temppopulation, and get mostfit parent on it.
+            randpopidx = int(random.random() * oldpopulation.populationsize())
+            temppopulation.settour(i, oldpopulation.gettour(randpopidx)) # temppopulation can be like [tour5, tour5, tour2, tour1, tour8]
+
+        selectedtour = temppopulation.getmostfittour()
+        return selectedtour
+
     def crossover(self, parent1, parent2):      # parent1, parent2, child are all "tour"s
-        child = Tour(self.nodestorage)
+        child = Tour(self.nodestorage, False)
 
-        patchstart = int(random.random() * parent1.toursize())
-        patchend = int(random.random() * parent1.toursize())
+        # parent1내에서 부분구간을잡고 Tour객체를 부분투어로서 선언후, setnode로 그 부분구간의 노드를 하나씩 세트해준다. 
+        # 그후 그 부분투어의 fitness를 레코드{}딕셔너리에 fitness : 해당부분투어객체 로 저장한다.
+        # 이 작업을 모든 구간에 대해서 다 해본뒤 레코드에 전부 어팬드한다. 
+        # 그후 keys로 가장 높은 fitness를 찾고 그fitness의 구간을 가져와서 패치로삼는다
 
-        for i in range(0, child.toursize()):    # randomly select patchstart, patchend, and mix tour timelines on that basis
-            if patchstart < patchend and patchstart < i and i < patchend:
+        fitnessroutedict = {}
+        for portionstart in range(0, parent1.toursize()):
+            historynode = []
+            for commondiff in range(0, parent1.toursize()):
+                portionend = portionstart + commondiff
+                if portionend >= parent1.toursize():
+                    portionend -= parent1.tousize()
+                historynode.append(parent1.getnode(portionend))
+                route = Tour(self.nodestorage, True)
+                route.tour = historynode
+                routefitness = route.getfitness()
+                fitnessroutedict[routefitness] = (portionstart, portionend) #portionstart,end는 parent1투어내부의 노드의인덱스
+        
+        maxfitness = max(fitnessroutedict.keys())
+        parent1_patchinfo = fitnessroutedict[maxfitness]
+        patchstart = parent1_patchinfo[0]
+        patchend = parent1_patchinfo[1]
+        if patchstart <= patchend:
+            for i in range(patchstart, patchend+1):
                 child.setnode(i, parent1.getnode(i))
-            elif patchstart > patchend:
-                if not (i < patchstart and i > patchend):
-                    child.setnode(i, parent1.getnode(i))
-
+        else:
+            for i in range(patchstart, parent1.toursize()):
+                child.setnode(i, parent1.getnode(i))
+            for i in range(0, patchend+1):
+                child.setnode(i, parent1.getnode(i))
+        
         for i in range(0, parent2.toursize()):
             if not child.containing(parent2.getnode(i)):
-                for j in range(0, child.toursize()):
+                for j in range(0, parent2.toursize()):
                     if child.getnode(j) == None:
                         child.setnode(j, parent2.getnode(i))
                         break
@@ -264,17 +355,6 @@ class GeneticAlgo:
                 tour.setnode(touridx2, node1)
                 tour.setnode(touridx1, node2)
 
-    def selectmostfittour(self, somepopulation):
-        temppopulation = Population(self.nodestorage, self.parentcandsize, False)
-
-        for i in range(0, self.parentcandsize):         # randomly select 5 parentcand on previous population, and regard them as temppopulation, and get mostfit parent on it.
-            randpopidx = int(random.random() * somepopulation.populationsize())
-            temppopulation.savetour(i, somepopulation.gettour(randpopidx)) # temppopulation can be like [tour5, tour5, tour2, tour1, tour8]
-
-        mostfittour = temppopulation.getmostfit()
-        return mostfittour
-
-
 
 if __name__ == '__main__':
     n_nodes = 10
@@ -284,16 +364,16 @@ if __name__ == '__main__':
     nodestorage = NodeStorage()
 
     # listing nodes
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721)) # TUS
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789)) # gatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930)) # shinagawa
+    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, util=50, stay=90, open=480, close=1020)) # TUS 8~17(hour)
+    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, util=50, stay=90, open=480, close=1020)) # mori tower
+    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, util=50, stay=90, open=480, close=1020)) # ebisu
+    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, util=50, stay=90, open=480, close=1020)) # yoyogi
+    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, util=50, stay=90, open=480, close=1020)) # shinanomachi
+    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, util=50, stay=90, open=480, close=1020)) # nakano
+    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, util=50, stay=90, open=480, close=1020)) # shimokitazawa
+    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, util=50, stay=90, open=480, close=1020)) # gatsudai
+    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, util=50, stay=90, open=480, close=1020)) # kichijoji
+    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, util=50, stay=90, open=480, close=1020)) # shinagawa
     
     population = Population(nodestorage, populationsize=populationsize, init=True)
     geneticalgo = GeneticAlgo(nodestorage)
@@ -302,7 +382,7 @@ if __name__ == '__main__':
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
 
-    result = population.getmostfit().tour # result = [node, node, node, node, ...]
+    result = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
     # make map with this result
     lonlist = []
