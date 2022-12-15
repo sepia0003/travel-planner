@@ -77,16 +77,8 @@ class Tour:
             for i in range(0, self.nodestorage.storagesize()):          #ns:Tour에서는 처음에 객체생성시 인수로받아온nodestorage안의 노드개수만큼공간만들고 시작
                 self.tour.append(None)
 
-    # def __len__(self):                  # len()함수
-    #     return len(self.tour)
-
-    # def __setitem__(self, key, value):  # tour[key] = value 메소드
-    #     self.tour[key] = value
-    
-    # def __getitem__(self, index):       # tour[key] 호출 메소드
-    #     return self.tour[index]         # __~~__ 같은 매직메소드는 get,set,del,len(겟셋끼들은)이 있다. 하지만 리스트 조작이랑 헷갈려서 굳이 안쓰기로 결정  
-                                          # 참고로 index는 key의 일종이다.
-
+    # __~~__ 같은 매직메소드는 get,set,del,len(겟셋들은)이 있다. 하지만 리스트 조작이랑 헷갈려서 굳이 안쓰기로 결정
+    # 참고로 index는 key의 일종이다.
     def getnode(self, index):
         return self.tour[index]
 
@@ -197,12 +189,6 @@ class Population:
                 newtour = Tour(nodestorage, False)             #ns:population에서는 단순히 맨처음population일때 해당pop으로서 쓰일 랜덤순서의투어들을 만드는역할 
                 newtour.inittour()
                 self.settour(i, newtour)
-        
-    # def __setitem__(self, key, value):
-    #     self.tours[key] = value
-
-    # def __getitem__(self, index):
-    #     return self.tours[index]
     
     def gettour(self, index):
         return self.tours[index]
@@ -253,6 +239,8 @@ class GeneticAlgo:
         return newpopulation
 
     def cleanup(self, oldpopulation):
+        #oldpopulation의 tour1~tour6전부순회 해보보면서 tw에 안맞는 놈들의 노드리스트를 기록(중복없이 1세대당 1번만기록)
+        #기록한것의 알파를 1씩증가
         alphaupnodes = []
         for i in range(0, oldpopulation.populationsize()):
             temptour = oldpopulation.gettour(i)
@@ -279,6 +267,7 @@ class GeneticAlgo:
         for ele in alphaupnodes:
             ele.alpha += 1
         
+        #GA객체만들때 입력한 최악수를 넘어가는 알파를 가진 노드를 nodestorage에서도, tour1~tour6에서도 삭제
         bannodes = []
         for i in range(0, self.nodestorage.storagesize()):
             tempnode = self.nodestorage.getnode(i)
@@ -289,10 +278,12 @@ class GeneticAlgo:
             for i in range(0, oldpopulation.populationsize()):
                 oldpopulation.gettour(i).delnode(ele)
 
+        #삭제된후의tour1~tour6에 대해 각각 피트니스 갱신
         for i in range(0, oldpopulation.populationsize()):
             _ = oldpopulation.gettour(i).getfitness()
 
     def makecandselectone(self, oldpopulation):
+        #중복을 허락해서 oldpopulation에서 요소를 미리정한후보사이즈만큼 뽑아옴 그중에서 가장 피트니스높은것을 선택하는 작업
         temppopulation = Population(self.nodestorage, self.parentcandsize, False)
 
         for i in range(0, self.parentcandsize):         # randomly select 5 parentcand on previous population, and regard them as temppopulation, and get mostfit parent on it.
@@ -305,11 +296,8 @@ class GeneticAlgo:
     def crossover(self, parent1, parent2):      # parent1, parent2, child are all "tour"s
         child = Tour(self.nodestorage, False)
 
-        # parent1내에서 부분구간을잡고 Tour객체를 부분투어로서 선언후, setnode로 그 부분구간의 노드를 하나씩 세트해준다. 
-        # 그후 그 부분투어의 fitness를 레코드{}딕셔너리에 fitness : 해당부분투어객체 로 저장한다.
-        # 이 작업을 모든 구간에 대해서 다 해본뒤 레코드에 전부 어팬드한다. 
-        # 그후 keys로 가장 높은 fitness를 찾고 그fitness의 구간을 가져와서 패치로삼는다
-
+        #parent1이라는 하나의 투어 내부에서 가능한 모든 루트(시작점에돌아오지않는경로)를 스택앤캐치방식으로 잡고
+        #해당 루트의 피트니스값과 시작노드,끝노드의 인덱스를 딕셔너리로서 저장 
         fitnessroutedict = {}
         for portionstart in range(0, parent1.toursize()):
             historynode = []
@@ -323,6 +311,9 @@ class GeneticAlgo:
                 routefitness = route.getfitness()
                 fitnessroutedict[routefitness] = (portionstart, portionend) #portionstart,end는 parent1투어내부의 노드의인덱스
         
+        #그 딕셔너리에서 가장 피트니스가높은 루트를 parent1에서 가져온다.
+        #그 루트의 시작노드, 끝노드의 인덱스가 오름차순이면 child에 그인덱스대로 복붙하고
+        #내림차순이면 일단 시작노드의 인덱스부터 끝인덱스까지 child에 복붙하고 0인덱스부터 끝노드의 인덱스까지 child에 복붙
         maxfitness = max(fitnessroutedict.keys())
         parent1_patchinfo = fitnessroutedict[maxfitness]
         patchstart = parent1_patchinfo[0]
@@ -336,6 +327,7 @@ class GeneticAlgo:
             for i in range(0, patchend+1):
                 child.setnode(i, parent1.getnode(i))
         
+        #그리고 child의 남은 None부분에 parent2에서 순서교차로 가져옴
         for i in range(0, parent2.toursize()):
             if not child.containing(parent2.getnode(i)):
                 for j in range(0, parent2.toursize()):
@@ -389,7 +381,7 @@ if __name__ == '__main__':
 
     result = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
-    #테스트(이하전부)
+    #테스트(이하전부)########################################################################################################
     import matplotlib.pyplot as plt
 
     nodestorage_original = NodeStorage()
@@ -427,9 +419,6 @@ if __name__ == '__main__':
 
     plt.savefig('map(gaModlue_tw_md_alpha).png')
 
-
-    # 아마 한세대끝날때마다 tw위반하는노드의 알파를 하나씩올리는데 그게 모든 노드에서 다 그렇게되는듯
-    # 아니다 잘 작동하는데 timeto 거리 걸리는시간때문에 올라갔던것
     
 
     # make map with this result
