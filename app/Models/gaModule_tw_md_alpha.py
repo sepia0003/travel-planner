@@ -54,6 +54,7 @@ class Node:
 
 class NodeStorage:
     storage = []                         # storage = [node1(obj), node2(obj), ...]
+    starttime = 0
 
     def addnode(self, node):
         self.storage.append(node)
@@ -116,23 +117,25 @@ class Tour:
     def gettourutil(self):
         if self.tourutil == 0:
             allutil = 0
-            # print('투어의길이:', len(self.tour))      #테스트
-            currenttime = self.getnode(0).getopen()
+            currenttime = self.nodestorage.starttime
             for i in range(0, self.toursize()):
                 frompoint = self.getnode(i)
                 topoint = None
                 if i+1 < self.toursize():
                     topoint = self.getnode(i+1)
                 else:
-                    topoint = self.getnode(0)
-                if frompoint.getopen() <= currenttime <= frompoint.getclose():
+                    topoint = self.getnode(0)  
+                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
+                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
                     allutil += frompoint.getutil()
                     currenttime += frompoint.getstay()
                     currenttime += frompoint.timeTo(topoint)
                 else:
                     currenttime += frompoint.timeTo(topoint)
-            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose() and not self.portion:
-                allutil += self.getnode(0).getutil()    #돌아왔을때도 효용을 얻게해서 효용의 높은곳에서 시작하는 가능성이 높아지도록
+            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose()\
+            and self.getnode(0).getopen() <= currenttime+self.getnode(0).getstay() <= self.getnode(0).getclose()\
+            and not self.portion:
+                allutil += self.getnode(0).getutil()    #돌아왔을때도 효용을 얻게해서 효용의 높은곳에서 시작하고 끝날 가능성이 높아지도록
             else:
                 pass
             self.tourutil = allutil
@@ -141,7 +144,7 @@ class Tour:
     def gettourtwmiss(self):
         if self.tourtwmiss == 0:
             alltwmiss = 0
-            currenttime = self.getnode(0).getopen() #min
+            currenttime = self.nodestorage.starttime
             for i in range(0, self.toursize()):
                 frompoint = self.getnode(i)
                 topoint = None
@@ -149,16 +152,30 @@ class Tour:
                     topoint = self.getnode(i+1)
                 else:
                     topoint = self.getnode(0)
-                if frompoint.getopen() <= currenttime <= frompoint.getclose():
+                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
+                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
                     currenttime += frompoint.getstay()
                     currenttime += frompoint.timeTo(topoint)
                 else:
-                    alltwmiss += frompoint.getalpha() * min(abs(currenttime - frompoint.getopen()), abs(currenttime - frompoint.getclose()))
+                    if currenttime < frompoint.getopen():
+                        tempmiss = frompoint.getopen() - currenttime
+                    elif frompoint.getclose() < currenttime+frompoint.getstay():
+                        tempmiss = currenttime+frompoint.getstay() - frompoint.getclose()
+                    else: #open~close를 current~+stay가 포함해버린경우 max값을줘서 fitness를 확낮추기 절대 해당노드를 여행할수 없기때문
+                        tempmiss = max(frompoint.getopen() - currenttime, currenttime+frompoint.getstay() - frompoint.getclose())
+                    alltwmiss += frompoint.getalpha() * tempmiss
                     currenttime += frompoint.timeTo(topoint)
-            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose():
+            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose()\
+            and self.getnode(0).getopen() <= currenttime+self.getnode(0).getstay() <= self.getnode(0).getclose():
                 pass
             elif not self.portion:
-                alltwmiss += self.getnode(0).getalpha() * min(abs(currenttime - self.getnode(0).getopen()), abs(currenttime - self.getnode(0).getclose()))
+                if currenttime < self.getnode(0).getopen():
+                    tempmiss = self.getnode(0).getopen() - currenttime
+                elif self.getnode(0).getclose() < currenttime+self.getnode(0).getstay():
+                    tempmiss = currenttime+self.getnode(0).getstay() - self.getnode(0).getclose()
+                else:
+                    tempmiss = max(self.getnode(0).getopen() - currenttime, currenttime+self.getnode(0).getstay() - self.getnode(0).getclose())
+                alltwmiss += self.getnode(0).getalpha() * tempmiss
             self.tourtwmiss = alltwmiss    
         return self.tourtwmiss
 
@@ -249,7 +266,7 @@ class GeneticAlgo:
         badstackofnodes = {} #노드:빈도 순으로 작성
         for i in range(0, oldpopulation.populationsize()):
             temptour = oldpopulation.gettour(i)
-            currenttime = temptour.getnode(0).getopen() #pop을 구성하는 각 투어에서 맨앞에노드의open시간
+            currenttime = self.nodestorage.starttime
             for j in range(0, temptour.toursize()):
                 frompoint = temptour.getnode(j)
                 topoint = None
@@ -257,7 +274,8 @@ class GeneticAlgo:
                     topoint = temptour.getnode(j+1)
                 else:
                     topoint = temptour.getnode(0)
-                if frompoint.getopen() <= currenttime <= frompoint.getclose(): #tw안이면
+                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
+                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
                     currenttime += frompoint.getstay()
                     currenttime += frompoint.timeTo(topoint)
                 else: #tw밖이면
@@ -266,7 +284,8 @@ class GeneticAlgo:
                     else:
                         badstackofnodes[frompoint] += 1
                     currenttime += frompoint.timeTo(topoint)
-            if temptour.getnode(0).getopen() <= currenttime <= temptour.getnode(0).getclose():
+            if temptour.getnode(0).getopen() <= currenttime <= temptour.getnode(0).getclose()\
+            and temptour.getnode(0).getopen() <= currenttime+temptour.getnode(0).getstay() <= temptour.getnode(0).getclose():
                 pass #처음시작위치로 돌아왔을때 tw내부일때
             else: #tw밖일때
                 if temptour.getnode(0) not in badstackofnodes:
@@ -365,9 +384,9 @@ class GeneticAlgo:
                 tour.setnode(touridx1, node2)
 
 
-def inspectvalidity(sometour):
+def inspecttourvalidity(sometour):
     flag = 1 #1은 valid하다는의미 
-    currenttime = sometour.getnode(0).getopen() #min
+    currenttime = nodestorage.starttime
     for i in range(0, sometour.toursize()):
         frompoint = sometour.getnode(i)
         topoint = None
@@ -375,13 +394,15 @@ def inspectvalidity(sometour):
             topoint = sometour.getnode(i+1)
         else:
             topoint = sometour.getnode(0)
-        if frompoint.getopen() <= currenttime <= frompoint.getclose():
+        if frompoint.getopen() <= currenttime <= frompoint.getclose()\
+        and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
             currenttime += frompoint.getstay()
             currenttime += frompoint.timeTo(topoint)
         else:
             flag = 0
             currenttime += frompoint.timeTo(topoint)
-    if sometour.getnode(0).getopen() <= currenttime <= sometour.getnode(0).getclose():
+    if sometour.getnode(0).getopen() <= currenttime <= sometour.getnode(0).getclose()\
+    and sometour.getnode(0).getopen() <= currenttime+sometour.getnode(0).getstay() <= sometour.getnode(0).getclose():
         pass
     else:
         flag = 0
@@ -393,7 +414,8 @@ def inspectvalidity(sometour):
     
     print(validity)
 
-def inspecttimeTo(sometour):
+def inspecttourtime(sometour):
+    totaltime = 0
     for i in range(0, sometour.toursize()):
         frompoint = sometour.getnode(i)
         topoint = None
@@ -401,8 +423,13 @@ def inspecttimeTo(sometour):
             topoint = sometour.getnode(i+1)
         else:
             topoint = sometour.getnode(0)
-        print("{} ~ {} : ".format(frompoint.getname(), topoint.getname()), "{}".format(frompoint.timeTo(topoint)))
-    
+        tempstay = frompoint.getstay()
+        temptime = frompoint.timeTo(topoint)
+        totaltime += tempstay
+        totaltime += temptime
+        print("({}stay){} ~ {} : ".format(tempstay, frompoint.getname(), topoint.getname()), "{}".format(temptime))
+    totaltime += sometour.getnode(0).getstay()
+    print('totaltourtime:', totaltime)
 
 
 if __name__ == '__main__':
@@ -410,23 +437,23 @@ if __name__ == '__main__':
     n_nodes = 10
     populationsize = 50
     n_generation = 700
-    worstnum = 100
+    worstnum = 200
+    starttime = 480
 
     # testnodes
-    # 주의, util이 너무 커버리면 그노드가 있는 투어의 fitness를구할때 twmiss나 distance의 마이너스값이 없는것이나 마찬가지가됨
-    # 결국 tw나 거리도 고려하지않고 오로지 투어의 util만을 가지고 투어들끼리의 비교를하게됨
-    tus =           Node(lon=139.741424, lat=35.699721, util=1, stay=5, open=184, close=185, name='tus')
-    moritower =     Node(lon=139.728871, lat=35.661302, util=5, stay=5, open=404, close=405, name='moritower')
-    ebisu =         Node(lon=139.714924, lat=35.643925, util=2, stay=5, open=354, close=355, name='ebisu')
-    yoyogi =        Node(lon=139.701975, lat=35.682837, util=3, stay=5, open=888, close=889, name='yoyogi')
-    shinanomachi =  Node(lon=139.719525, lat=35.680659, util=5, stay=5, open=121, close=122, name='shinanomachi')
-    nakano =        Node(lon=139.666109, lat=35.705378, util=10, stay=5, open=0, close=1043, name='nakano')
-    shimokitazawa = Node(lon=139.668144, lat=35.661516, util=3, stay=5, open=971, close=972, name='shimokitazawa')
-    hatsudai =      Node(lon=139.686511, lat=35.680789, util=6, stay=5, open=69, close=70, name='hatsudai')
-    kichijoji =     Node(lon=139.579722, lat=35.702351, util=5, stay=5, open=680, close=681, name='kichijoji')
-    shinagawa =     Node(lon=139.736571, lat=35.628930, util=10, stay=5, open=297, close=298, name='shinagawa')
+    tus =           Node(lon=139.741424, lat=35.699721, util=1, stay=5, open=480, close=1020, name='tus')
+    moritower =     Node(lon=139.728871, lat=35.661302, util=100, stay=5, open=0, close=10000, name='moritower')
+    ebisu =         Node(lon=139.714924, lat=35.643925, util=2, stay=5, open=720, close=840, name='ebisu')
+    yoyogi =        Node(lon=139.701975, lat=35.682837, util=3, stay=5, open=300, close=1440, name='yoyogi')
+    shinanomachi =  Node(lon=139.719525, lat=35.680659, util=5, stay=5, open=480, close=960, name='shinanomachi')
+    nakano =        Node(lon=139.666109, lat=35.705378, util=6, stay=5, open=660, close=1200, name='nakano')
+    shimokitazawa = Node(lon=139.668144, lat=35.661516, util=3, stay=5, open=1320, close=1440, name='shimokitazawa')
+    hatsudai =      Node(lon=139.686511, lat=35.680789, util=6, stay=5, open=480, close=360, name='hatsudai')
+    kichijoji =     Node(lon=139.579722, lat=35.702351, util=5, stay=5, open=720, close=1080, name='kichijoji')
+    shinagawa =     Node(lon=139.736571, lat=35.628930, util=1, stay=5, open=480, close=720, name='shinagawa')
 
     nodestorage = NodeStorage()
+    nodestorage.starttime = starttime
     nodestorage.addnode(tus)
     nodestorage.addnode(moritower)
     nodestorage.addnode(ebisu) 
@@ -455,7 +482,7 @@ if __name__ == '__main__':
         temptour.setnode(7, kichijoji)
         temptour.setnode(8, yoyogi)
         temptour.setnode(9, shimokitazawa)
-        inspecttimeTo(temptour)
+        inspecttourtime(temptour)
         exit()
     else:
         pass
@@ -476,12 +503,15 @@ if __name__ == '__main__':
     result_justlist = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
     # inspect validity of result
-    inspectvalidity(result)
+    inspecttourtime(result)
+    inspecttourvalidity(result)
 
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?
     # 그럼 많아질때 worstnum도 증가시켜야하나?
     # 노드개수 고정시켰을때에 대해서인데, 다양한 효용의 투어가 나오는데 여러개 해봐서 그중 좋은 투어를 반환하도록해야할까
+    # 뭔가 하나 노드가 특출나게 이상하면 alpha의 증가 속도가 덩달아 커지는 느낌
+    # 전체제네레이션수의/4 로 최악수를 잡으면될듯?
     
 
     # make a map with result
