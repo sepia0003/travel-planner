@@ -5,14 +5,15 @@ import folium
 import random
 
 class Node:
-    def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None): # stay, open, close should be in min
+    def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None, alpha=1, name=None): # stay, open, close should be in min
         self.lon = lon
         self.lat = lat
         self.util = util
         self.stay = stay
         self.open = open
         self.close = close
-        self.alpha = 1
+        self.alpha = alpha
+        self.name = name
 
     def getlon(self):
         return self.lon
@@ -34,6 +35,9 @@ class Node:
 
     def getalpha(self):
         return self.alpha
+    
+    def getname(self):
+        return self.name
 
     def distanceTo(self, dest): #lon,lat ~ lon,lat, we use manhattan distance for brief test.
         distance = 0            #unit = °, we don't use min'sec" only degree.
@@ -361,7 +365,7 @@ class GeneticAlgo:
                 tour.setnode(touridx1, node2)
 
 
-def confirmvalidity(sometour):
+def inspectvalidity(sometour):
     flag = 1 #1은 valid하다는의미 
     currenttime = sometour.getnode(0).getopen() #min
     for i in range(0, sometour.toursize()):
@@ -389,58 +393,103 @@ def confirmvalidity(sometour):
     
     print(validity)
 
+def inspecttimeTo(sometour):
+    for i in range(0, sometour.toursize()):
+        frompoint = sometour.getnode(i)
+        topoint = None
+        if i+1 < sometour.toursize():
+            topoint = sometour.getnode(i+1)
+        else:
+            topoint = sometour.getnode(0)
+        print("{} ~ {} : ".format(frompoint.getname(), topoint.getname()), "{}".format(frompoint.timeTo(topoint)))
+    
+
 
 if __name__ == '__main__':
+    # testenv
     n_nodes = 10
     populationsize = 50
     n_generation = 700
     worstnum = 100
 
-    nodestorage = NodeStorage()
-
-    # listing nodes
+    # testnodes
     # 주의, util이 너무 커버리면 그노드가 있는 투어의 fitness를구할때 twmiss나 distance의 마이너스값이 없는것이나 마찬가지가됨
     # 결국 tw나 거리도 고려하지않고 오로지 투어의 util만을 가지고 투어들끼리의 비교를하게됨
-    nodestorage.addnode(Node(lon=139.741424, lat=35.699721, util=1, stay=9, open=480, close=1020)) # TUS 8~17(hour)
-    nodestorage.addnode(Node(lon=139.728871, lat=35.661302, util=5000, stay=9, open=0, close=10200)) # mori tower
-    nodestorage.addnode(Node(lon=139.714924, lat=35.643925, util=2, stay=9, open=480, close=1020)) # ebisu
-    nodestorage.addnode(Node(lon=139.701975, lat=35.682837, util=3, stay=9, open=480, close=1020)) # yoyogi
-    nodestorage.addnode(Node(lon=139.719525, lat=35.680659, util=5, stay=9, open=480, close=1020)) # shinanomachi
-    nodestorage.addnode(Node(lon=139.666109, lat=35.705378, util=10, stay=9, open=480, close=1020)) # nakano
-    nodestorage.addnode(Node(lon=139.668144, lat=35.661516, util=3, stay=9, open=480, close=1020)) # shimokitazawa
-    nodestorage.addnode(Node(lon=139.686511, lat=35.680789, util=6, stay=9, open=480, close=1020)) # gatsudai
-    nodestorage.addnode(Node(lon=139.579722, lat=35.702351, util=9, stay=9, open=480, close=1020)) # kichijoji
-    nodestorage.addnode(Node(lon=139.736571, lat=35.628930, util=10, stay=9, open=480, close=1020)) # shinagawa
-    nodestorage_map = NodeStorage()
-    nodestorage_map.storage = nodestorage.storage.copy()
-    
+    tus =           Node(lon=139.741424, lat=35.699721, util=1, stay=5, open=184, close=185, name='tus')
+    moritower =     Node(lon=139.728871, lat=35.661302, util=5, stay=5, open=404, close=405, name='moritower')
+    ebisu =         Node(lon=139.714924, lat=35.643925, util=2, stay=5, open=354, close=355, name='ebisu')
+    yoyogi =        Node(lon=139.701975, lat=35.682837, util=3, stay=5, open=888, close=889, name='yoyogi')
+    shinanomachi =  Node(lon=139.719525, lat=35.680659, util=5, stay=5, open=121, close=122, name='shinanomachi')
+    nakano =        Node(lon=139.666109, lat=35.705378, util=10, stay=5, open=0, close=1043, name='nakano')
+    shimokitazawa = Node(lon=139.668144, lat=35.661516, util=3, stay=5, open=971, close=972, name='shimokitazawa')
+    hatsudai =      Node(lon=139.686511, lat=35.680789, util=6, stay=5, open=69, close=70, name='hatsudai')
+    kichijoji =     Node(lon=139.579722, lat=35.702351, util=5, stay=5, open=680, close=681, name='kichijoji')
+    shinagawa =     Node(lon=139.736571, lat=35.628930, util=10, stay=5, open=297, close=298, name='shinagawa')
+
+    nodestorage = NodeStorage()
+    nodestorage.addnode(tus)
+    nodestorage.addnode(moritower)
+    nodestorage.addnode(ebisu) 
+    nodestorage.addnode(yoyogi)
+    nodestorage.addnode(shinanomachi) 
+    nodestorage.addnode(nakano) 
+    nodestorage.addnode(shimokitazawa) 
+    nodestorage.addnode(hatsudai)
+    nodestorage.addnode(kichijoji)
+    nodestorage.addnode(shinagawa)
+    mapframenodestorage = NodeStorage()
+    mapframenodestorage.storage = nodestorage.storage.copy()
+
+    # ask inspection of timeTo before evolution
+    print("you want to inspect timeTo of your custom tour?")
+    answer = input()
+    if answer == 'y':
+        temptour = Tour(nodestorage, False)
+        temptour.setnode(0, nakano)
+        temptour.setnode(1, hatsudai)
+        temptour.setnode(2, shinanomachi)
+        temptour.setnode(3, tus)
+        temptour.setnode(4, shinagawa)
+        temptour.setnode(5, ebisu)
+        temptour.setnode(6, moritower)
+        temptour.setnode(7, kichijoji)
+        temptour.setnode(8, yoyogi)
+        temptour.setnode(9, shimokitazawa)
+        inspecttimeTo(temptour)
+        exit()
+    else:
+        pass
+
+    # makepopulation, geneticalgo obj for evolution
     population = Population(nodestorage, populationsize=populationsize, init=True)
     geneticalgo = GeneticAlgo(nodestorage, worstnum)
 
-    # evolve
+    # evolution
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
         for j in nodestorage.storage:       #테스트
             print(j.getalpha(), end='/')    #테스트
         print('\n')                         #테스트
 
+    # get result from latest population
     result = population.getmostfittour()
     result_justlist = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
-    # 그리고 나온 최종결과로 나온 루트가 진짜 tw상 갈수있는 루트인지 순회하면서 확인
-    confirmvalidity(result)
+    # inspect validity of result
+    inspectvalidity(result)
+
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?
     # 그럼 많아질때 worstnum도 증가시켜야하나?
     # 노드개수 고정시켰을때에 대해서인데, 다양한 효용의 투어가 나오는데 여러개 해봐서 그중 좋은 투어를 반환하도록해야할까
     
 
-    #테스트(이하전부)########################################################################################################
+    # make a map with result
     import matplotlib.pyplot as plt
 
     original_lonlist = []
     original_latlist = []
-    for i in nodestorage_map.storage:
+    for i in mapframenodestorage.storage:
         original_lonlist.append(i.getlon())
         original_latlist.append(i.getlat())
     plt.scatter(original_lonlist, original_latlist)
