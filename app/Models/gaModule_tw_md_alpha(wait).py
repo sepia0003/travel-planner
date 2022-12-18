@@ -125,21 +125,32 @@ class Tour:
                     topoint = self.getnode(i+1)
                 else:
                     topoint = self.getnode(0)  
-                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
-                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
-                    allutil += frompoint.getutil()
-                    currenttime += frompoint.getstay()
-                    currenttime += frompoint.timeTo(topoint)
+                if frompoint.getstay() <= frompoint.getclose()-frompoint.getopen():
+                    if currenttime < frompoint.getopen():
+                        currenttime += frompoint.getopen() - currenttime
+                        currenttime += frompoint.getstay()
+                        allutil += frompoint.getutil()              #작은스테이윈도우가 왼쪽에 있을땐, 문앞에서 기다렸다가 체류하고 유틸얻고 다음노드로
+                        currenttime += frompoint.timeTo(topoint)
+                    elif frompoint.getclose() < currenttime+frompoint.getstay():
+                        currenttime += frompoint.timeTo(topoint)    #작은스테이윈도우가 오른쪽에 있을땐, 현재상태에선 절대 유틸을 얻을수 없으니 다음노드로
+                    else:
+                        currenttime += frompoint.getstay()
+                        allutil += frompoint.getutil()              #작은스테이윈도우가 타임윈도우안에있을땐, 체류하고 유틸얻고 다음노드로
+                        currenttime += frompoint.timeTo(topoint)
                 else:
-                    currenttime += frompoint.timeTo(topoint)
-            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose()\
-            and self.getnode(0).getopen() <= currenttime+self.getnode(0).getstay() <= self.getnode(0).getclose()\
-            and not self.portion:
-                allutil += self.getnode(0).getutil()    #돌아왔을때도 효용을 얻게해서 효용의 높은곳에서 시작하고 끝날 가능성이 높아지도록
-            else:
-                pass
-            self.tourutil = allutil
-        return self.tourutil
+                    currenttime += frompoint.timeTo(topoint)        #큰스테이윈도우이면 절대 유틸을 얻을수 없으니 다음노드로
+            if not self.portion:
+                if self.getnode(0).getstay() <= self.getnode(0).getclose()-self.getnode(0).getopen():
+                    if currenttime < self.getnode(0).getopen():
+                        allutil += self.getnode(0).getutil()       
+                    elif self.getnode(0).getclose() < currenttime+self.getnode(0).getstay():
+                        pass                                        #이전루프에서는 frompoint에 대해 조사후 다음노드까지의 이동시간을 구했다.
+                    else:                                           #하지만 이전루프에서 from이마지막인덱스의 노드이고 to가처음인덱스의노드일때, to까지의이동시간까지만구하고
+                        allutil += self.getnode(0).getutil()        #to의노드에 도착했을때 to의노드의tw에 맞는지 안맞는지 체크를 안했다.
+                else:                                               #그래서 한번더 to노드 즉,처음노드만 따로 한번더 검증
+                    pass                                            #돌아왔을때에도 util을 주는이유는 집으로 정할노드보다 더 투어에서 돌아와도 여유있을 tw를 가진 노드가 있을경우
+            self.tourutil = allutil                                 #집의 util을 그 노드보다 크게 줘서 집으로 돌아오게끔 하기위해
+        return self.tourutil                                        #(돌아올노드는 1.tw가 투어에서 돌아와도 열려있을만큼 넓음 2.유틸이많음 의 우선순위로 결정됨)
 
     def gettourtwmiss(self):
         if self.tourtwmiss == 0:
@@ -152,30 +163,37 @@ class Tour:
                     topoint = self.getnode(i+1)
                 else:
                     topoint = self.getnode(0)
-                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
-                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
-                    currenttime += frompoint.getstay()
-                    currenttime += frompoint.timeTo(topoint)
-                else:
+                if frompoint.getstay() <= frompoint.getclose()-frompoint.getopen():
                     if currenttime < frompoint.getopen():
-                        tempmiss = frompoint.getopen() - currenttime
+                        tempmiss = frompoint.getopen() - currenttime        #주의, miss는 단지 시간차이만 나타내는것이고, twmiss는 거기에 알파를 곱해준값이다.
+                        alltwmiss += tempmiss * frompoint.getalpha()
+                        currenttime += tempmiss
+                        currenttime += frompoint.getstay()
+                        currenttime += frompoint.timeTo(topoint)
                     elif frompoint.getclose() < currenttime+frompoint.getstay():
                         tempmiss = currenttime+frompoint.getstay() - frompoint.getclose()
-                    else: #open~close를 current~+stay가 포함해버린경우 max값을줘서 fitness를 확낮추기 절대 해당노드를 여행할수 없기때문
-                        tempmiss = max(frompoint.getopen() - currenttime, currenttime+frompoint.getstay() - frompoint.getclose())
-                    alltwmiss += frompoint.getalpha() * tempmiss
-                    currenttime += frompoint.timeTo(topoint)
-            if self.getnode(0).getopen() <= currenttime <= self.getnode(0).getclose()\
-            and self.getnode(0).getopen() <= currenttime+self.getnode(0).getstay() <= self.getnode(0).getclose():
-                pass
-            elif not self.portion:
-                if currenttime < self.getnode(0).getopen():
-                    tempmiss = self.getnode(0).getopen() - currenttime
-                elif self.getnode(0).getclose() < currenttime+self.getnode(0).getstay():
-                    tempmiss = currenttime+self.getnode(0).getstay() - self.getnode(0).getclose()
+                        alltwmiss += tempmiss * frompoint.getalpha()
+                        currenttime += frompoint.timeTo(topoint)
+                    else:
+                        currenttime += frompoint.getstay()
+                        currenttime += frompoint.timeTo(topoint)
                 else:
-                    tempmiss = max(self.getnode(0).getopen() - currenttime, currenttime+self.getnode(0).getstay() - self.getnode(0).getclose())
-                alltwmiss += self.getnode(0).getalpha() * tempmiss
+                    tempmiss = max(abs(currenttime - frompoint.getopen()), abs(currenttime+frompoint.getstay() - frompoint.getclose()))
+                    alltwmiss += tempmiss * frompoint.getalpha()
+                    currenttime += frompoint.timeTo(topoint)
+            if not self.portion:
+                if self.getnode(0).getstay() <= self.getnode(0).getclose()-self.getnode(0).getopen():
+                    if currenttime < self.getnode(0).getopen():
+                        tempmiss = self.getnode(0).getopen() - currenttime
+                        alltwmiss += tempmiss * self.getnode(0).getalpha()
+                    elif self.getnode(0).getclose() < currenttime+self.getnode(0).getstay():
+                        tempmiss = currenttime+self.getnode(0).getstay() - self.getnode(0).getclose()
+                        alltwmiss += tempmiss * self.getnode(0).getalpha()
+                    else:
+                        pass
+                else:
+                    tempmiss = max(abs(currenttime - self.getnode(0).getopen()), abs(currenttime+self.getnode(0).getstay() - self.getnode(0).getclose()))
+                    alltwmiss += tempmiss * self.getnode(0).getalpha()
             self.tourtwmiss = alltwmiss    
         return self.tourtwmiss
 
@@ -261,35 +279,49 @@ class GeneticAlgo:
 
     def cleanup(self, oldpopulation):
         #oldpopulation의 tour1~tour6전부순회 해보보면서 tw에 안맞는 노드가 있다면 badstackofnodes에 스택을 추가해나간다 
-        #(각노드는 투어에서 한번밖에 등장하지 않으므로 한노드의 스택의 최대값은 populationsize가 된다)
+        #(각노드는 투어에서 한번밖에 등장하지 않으므로 한노드의 스택의 최대값은 populationsize가 된다. 0인덱스의 노드일지라도 1번만 세도록 함)
         #그렇게 badstackofnodes가 만들어졌다면 populationsize/2 보다 많은 투어에서 tw를위반한 노드의 알파를 1씩증가시킨다
         badstackofnodes = {} #노드:빈도 순으로 작성
-        for i in range(0, oldpopulation.populationsize()):
+        for ele in self.nodestorage.storage:
+            badstackofnodes[ele] = 0 # 스택을 0으로 초기화
+        for i in range(0, oldpopulation.populationsize()):      #주의, populationsize는 해당population안에 들어가있는 tour의 개수이다.
             temptour = oldpopulation.gettour(i)
             currenttime = self.nodestorage.starttime
-            for j in range(0, temptour.toursize()):
+            alreadystacked = []
+            for j in range(0, temptour.toursize()):             #주의, toursize는 해당 tour안에 들어가있는 node의 개수이다.
                 frompoint = temptour.getnode(j)
                 topoint = None
                 if j+1 < temptour.toursize():
                     topoint = temptour.getnode(j+1)
                 else:
                     topoint = temptour.getnode(0)
-                if frompoint.getopen() <= currenttime <= frompoint.getclose()\
-                and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
-                    currenttime += frompoint.getstay()
-                    currenttime += frompoint.timeTo(topoint)
-                else: #tw밖이면
-                    if frompoint not in badstackofnodes:
-                        badstackofnodes[frompoint] = 1
-                    else:
+                if frompoint.getstay() <= frompoint.getclose()-frompoint.getopen():
+                    if currenttime < frompoint.getopen():
+                        # badstackofnodes[frompoint] += 1
+                        # alreadystaked.append(frompoint)
+                        currenttime += frompoint.getopen() - currenttime
+                        currenttime += frompoint.getstay()
+                        currenttime += frompoint.timeTo(topoint)
+                    elif frompoint.getclose() < currenttime+frompoint.getstay():
                         badstackofnodes[frompoint] += 1
+                        alreadystacked.append(frompoint)
+                        currenttime += frompoint.timeTo(topoint)
+                    else:
+                        currenttime += frompoint.getstay()
+                        currenttime += frompoint.timeTo(topoint)
+                else:
+                    badstackofnodes[frompoint] += 1
+                    alreadystacked.append(frompoint)
                     currenttime += frompoint.timeTo(topoint)
-            if temptour.getnode(0).getopen() <= currenttime <= temptour.getnode(0).getclose()\
-            and temptour.getnode(0).getopen() <= currenttime+temptour.getnode(0).getstay() <= temptour.getnode(0).getclose():
-                pass #처음시작위치로 돌아왔을때 tw내부일때
-            else: #tw밖일때
-                if temptour.getnode(0) not in badstackofnodes:
-                    badstackofnodes[temptour.getnode(0)] = 1
+            if temptour.getnode(0) not in alreadystacked:
+                if temptour.getnode(0).getstay() <= temptour.getnode(0).getclose()-temptour.getnode(0).getopen():
+                    if currenttime < temptour.getnode(0).getopen():
+                        # badstackofnodes[temptour.getnode(0)] += 1
+                        pass
+                    elif temptour.getnode(0).getclose() < currenttime+temptour.getnode(0).getstay():
+                        badstackofnodes[temptour.getnode(0)] += 1
+                    else:
+                        pass
                 else:
                     badstackofnodes[temptour.getnode(0)] += 1
         for ele in badstackofnodes.keys():
@@ -341,8 +373,9 @@ class GeneticAlgo:
                 routefitnessdict[(portionstart, portionend)] = fitnessofroute #portionstart,end는 parent1투어내부의 노드의인덱스
         
         #그 딕셔너리에서 가장 피트니스가높은 루트를 parent1에서 가져온다.
-        #그 루트의 시작노드, 끝노드의 인덱스가 오름차순이면 child에 그인덱스대로 복붙하고
-        #내림차순이면 일단 시작노드의 인덱스부터 끝인덱스까지 child에 복붙하고 0인덱스부터 끝노드의 인덱스까지 child에 복붙
+        #그 루트의 시작노드, 끝노드의 인덱스가 오름차순이면 child의 맨앞에서부터 채워나가고
+        #내림차순이면 일단 시작노드의 인덱스부터 끝인덱스까지 child에 맨앞에서부터 채워나가고 0인덱스부터 끝노드의 인덱스까지 그뒤로 채워나감
+        #(절대 있는 parent1의 노드인덱스위치 그대로 복붙하면 안된다. 그 인덱스위치 그대로 끝날때까지 고정이 되어버리기 때문)
         maxfitness = max(routefitnessdict.values())
         temprecord = []
         for ele in routefitnessdict.keys():
@@ -354,12 +387,12 @@ class GeneticAlgo:
         patchend = parent1_patchinfo[1]
         if patchstart <= patchend:
             for i in range(patchstart, patchend+1):
-                child.setnode(i, parent1.getnode(i))
+                child.setnode(i-patchstart, parent1.getnode(i))
         else:
             for i in range(patchstart, parent1.toursize()):
-                child.setnode(i, parent1.getnode(i))
+                child.setnode(i-patchstart, parent1.getnode(i))
             for i in range(0, patchend+1):
-                child.setnode(i, parent1.getnode(i))
+                child.setnode(i+parent1.toursize()-patchstart, parent1.getnode(i))
         
         #그리고 child의 남은 None부분에 parent2에서 순서교차로 가져옴
         for i in range(0, parent2.toursize()):
@@ -384,9 +417,11 @@ class GeneticAlgo:
                 tour.setnode(touridx1, node2)
 
 
-def inspecttourvalidity(sometour):
-    flag = 1 #1은 valid하다는의미 
-    currenttime = nodestorage.starttime
+def inspecttour(sometour, starttime):
+    flag = 1 #1은 valid하다는의미
+    currenttime = starttime
+    print('시작시간:', currenttime)
+    print('')
     for i in range(0, sometour.toursize()):
         frompoint = sometour.getnode(i)
         topoint = None
@@ -394,63 +429,76 @@ def inspecttourvalidity(sometour):
             topoint = sometour.getnode(i+1)
         else:
             topoint = sometour.getnode(0)
-        if frompoint.getopen() <= currenttime <= frompoint.getclose()\
-        and frompoint.getopen() <= currenttime+frompoint.getstay() <= frompoint.getclose():
-            currenttime += frompoint.getstay()
-            currenttime += frompoint.timeTo(topoint)
+        if frompoint.getstay() <= frompoint.getclose()-frompoint.getopen():
+            if currenttime < frompoint.getopen():
+                print('┏{}대기┓'.format(frompoint.getopen() - currenttime))
+                currenttime += frompoint.getopen() - currenttime
+                currenttime += frompoint.getstay()
+                print('[{}]\t {}분 체류({})'.format(frompoint.getname(), frompoint.getstay(), currenttime))
+                currenttime += frompoint.timeTo(topoint)
+                print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
+            elif frompoint.getclose() < currenttime+frompoint.getstay():
+                flag = 0
+                print('[{}]를 방문했으나 tw가 안맞았음({})'.format(frompoint.getname(), currenttime))
+                currenttime += frompoint.timeTo(topoint)
+                print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
+            else:
+                print('┏대기없음┓')
+                currenttime += frompoint.getstay()
+                print('[{}]\t {}분 체류({})'.format(frompoint.getname(), frompoint.getstay(), currenttime))
+                currenttime += frompoint.timeTo(topoint)
+                print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
         else:
             flag = 0
+            print('[{}]를 방문했으나 tw가 안맞았음({})'.format(frompoint.getname(), currenttime))
             currenttime += frompoint.timeTo(topoint)
-    if sometour.getnode(0).getopen() <= currenttime <= sometour.getnode(0).getclose()\
-    and sometour.getnode(0).getopen() <= currenttime+sometour.getnode(0).getstay() <= sometour.getnode(0).getclose():
-        pass
+            print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
+    if sometour.getnode(0).getstay() <= sometour.getnode(0).getclose()-sometour.getnode(0).getopen():
+        if currenttime < sometour.getnode(0).getopen():
+            print('┏{}대기┓'.format(sometour.getnode(0).getopen() - currenttime))
+            currenttime += sometour.getnode(0).getopen() - currenttime
+            currenttime += sometour.getnode(0).getstay()
+            print('[{}]\t {}분 체류({})'.format(sometour.getnode(0).getname(), sometour.getnode(0).getstay(), currenttime))
+        elif sometour.getnode(0).getclose() < currenttime+sometour.getnode(0).getstay():
+            flag = 0
+            print('[{}]를 방문했으나 tw가 안맞았음({})'.format(sometour.getnode(0).getname(), currenttime))
+        else:
+            print('┏대기없음┓')
+            currenttime += sometour.getnode(0).getstay()
+            print('[{}]\t {}분 체류({})'.format(sometour.getnode(0).getname(), sometour.getnode(0).getstay(), currenttime))
     else:
         flag = 0
-    
+        print('[{}]를 방문했으나 tw가 안맞았음({})'.format(sometour.getnode(0).getname(), currenttime))
+    print('')
+    print('종료시간:', currenttime)
+    print('총소요시간:', currenttime - starttime)
+
     if flag == 1:
         validity = 'Valid!'
     else:
         validity = 'Fail!'
-    
     print(validity)
-
-def inspecttourtime(sometour):
-    totaltime = 0
-    for i in range(0, sometour.toursize()):
-        frompoint = sometour.getnode(i)
-        topoint = None
-        if i+1 < sometour.toursize():
-            topoint = sometour.getnode(i+1)
-        else:
-            topoint = sometour.getnode(0)
-        tempstay = frompoint.getstay()
-        temptime = frompoint.timeTo(topoint)
-        totaltime += tempstay
-        totaltime += temptime
-        print("({}stay){} ~ {} : ".format(tempstay, frompoint.getname(), topoint.getname()), "{}".format(temptime))
-    totaltime += sometour.getnode(0).getstay()
-    print('totaltourtime:', totaltime)
 
 
 if __name__ == '__main__':
     # testenv
     n_nodes = 10
     populationsize = 50
-    n_generation = 700
-    worstnum = 200
+    n_generation = 1000
+    worstnum = 500
     starttime = 480
 
     # testnodes
-    tus =           Node(lon=139.741424, lat=35.699721, util=1, stay=5, open=480, close=1020, name='tus')
-    moritower =     Node(lon=139.728871, lat=35.661302, util=100, stay=5, open=0, close=10000, name='moritower')
-    ebisu =         Node(lon=139.714924, lat=35.643925, util=2, stay=5, open=720, close=840, name='ebisu')
-    yoyogi =        Node(lon=139.701975, lat=35.682837, util=3, stay=5, open=300, close=1440, name='yoyogi')
-    shinanomachi =  Node(lon=139.719525, lat=35.680659, util=5, stay=5, open=480, close=960, name='shinanomachi')
-    nakano =        Node(lon=139.666109, lat=35.705378, util=6, stay=5, open=660, close=1200, name='nakano')
-    shimokitazawa = Node(lon=139.668144, lat=35.661516, util=3, stay=5, open=1320, close=1440, name='shimokitazawa')
-    hatsudai =      Node(lon=139.686511, lat=35.680789, util=6, stay=5, open=480, close=360, name='hatsudai')
-    kichijoji =     Node(lon=139.579722, lat=35.702351, util=5, stay=5, open=720, close=1080, name='kichijoji')
-    shinagawa =     Node(lon=139.736571, lat=35.628930, util=1, stay=5, open=480, close=720, name='shinagawa')
+    tus =           Node(lon=139.741424, lat=35.699721, util=100, stay=90, open=480, close=840, name='tus')
+    moritower =     Node(lon=139.728871, lat=35.661302, util=1, stay=30, open=0, close=10000, name='moritower')
+    ebisu =         Node(lon=139.714924, lat=35.643925, util=40, stay=30, open=720, close=840, name='ebisu')
+    yoyogi =        Node(lon=139.701975, lat=35.682837, util=100, stay=60, open=1200, close=1440, name='yoyogi')
+    shinanomachi =  Node(lon=139.719525, lat=35.680659, util=30, stay=10, open=480, close=660, name='shinanomachi')
+    nakano =        Node(lon=139.666109, lat=35.705378, util=100, stay=120, open=660, close=1200, name='nakano')
+    shimokitazawa = Node(lon=139.668144, lat=35.661516, util=300, stay=30, open=1200, close=1440, name='shimokitazawa')
+    hatsudai =      Node(lon=139.686511, lat=35.680789, util=50, stay=60, open=300, close=600, name='hatsudai')
+    kichijoji =     Node(lon=139.579722, lat=35.702351, util=1000, stay=0, open=720, close=1080, name='kichijoji')
+    shinagawa =     Node(lon=139.736571, lat=35.628930, util=700, stay=10, open=480, close=600, name='shinagawa')
 
     nodestorage = NodeStorage()
     nodestorage.starttime = starttime
@@ -482,7 +530,7 @@ if __name__ == '__main__':
         temptour.setnode(7, kichijoji)
         temptour.setnode(8, yoyogi)
         temptour.setnode(9, shimokitazawa)
-        inspecttourtime(temptour)
+        inspecttour(temptour, starttime)
         exit()
     else:
         pass
@@ -502,9 +550,8 @@ if __name__ == '__main__':
     result = population.getmostfittour()
     result_justlist = population.getmostfittour().tour # result = [node, node, node, node, ...]
 
-    # inspect validity of result
-    inspecttourtime(result)
-    inspecttourvalidity(result)
+    # inspect result
+    inspecttour(result, starttime)
 
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?
