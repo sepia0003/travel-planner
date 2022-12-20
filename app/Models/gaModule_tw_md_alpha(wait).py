@@ -111,7 +111,7 @@ class Tour:
     
     def getfitness(self):                                     
         if self.fitness == 0:
-            self.fitness = self.gettourutil() - self.gettourtwmiss() - self.gettourdistance()         # the evaluation function of the problem
+            self.fitness = self.gettourutil() - self.gettourtwmiss() #- self.gettourdistance()         # the evaluation function of the problem
         return self.fitness
 
     def gettourutil(self):
@@ -324,9 +324,20 @@ class GeneticAlgo:
                         pass
                 else:
                     badstackofnodes[temptour.getnode(0)] += 1
+        meanutil = 0
+        lenofmean = 0
         for ele in badstackofnodes.keys():
             if badstackofnodes[ele] > oldpopulation.populationsize()/2:
+                meanutil += ele.getutil()
+                lenofmean += 1
+        if lenofmean != 0:        
+            meanutil /= lenofmean
+
+        for ele in badstackofnodes.keys():#ebisu가 앞조건에 안걸리니까 자꾸 kichijoji가 올라가는것 크로스오버때 p2에서 랜덤으로 가져와서 배치
+            if badstackofnodes[ele] > oldpopulation.populationsize()/2 and ele.getutil() <= meanutil:
                 ele.alpha += 1
+            # elif ele.alpha != 0:
+            #     ele.alpha -= 1
         
         #GA객체만들때 입력한 최악수를 넘어가는 알파를 가진 노드를 nodestorage에서도, tour1~tour6에서도 삭제
         bannodes = []
@@ -394,13 +405,117 @@ class GeneticAlgo:
             for i in range(0, patchend+1):
                 child.setnode(i+parent1.toursize()-patchstart, parent1.getnode(i))
         
-        #그리고 child의 남은 None부분에 parent2에서 순서교차로 가져옴
-        for i in range(0, parent2.toursize()):
-            if not child.containing(parent2.getnode(i)):
-                for j in range(0, parent2.toursize()):
-                    if child.getnode(j) == None:
-                        child.setnode(j, parent2.getnode(i))
-                        break
+        #////////////////////////////////////////
+        #우선 P2를 복사해오고 복사한 P2에서 child에 있는 요소를 전부 제거
+        tempp2nodes = parent2.tour.copy()
+        for ele in child.tour:
+            try:
+                tempp2nodes.remove(ele)
+            except:
+                pass    
+        
+        #방법1////////////////////////////////
+        
+        #그렇게 세모만으로 이루어진 P2를 기준으로 앞으로 생각함
+        # while len(tempp2nodes) != 0:
+        #     recorded = {}
+        #     notnonecnt = 0
+        #     for ele in child.tour:
+        #         if ele != None:
+        #             notnonecnt += 1
+        #     tempp2 = tempp2nodes.copy()
+        #     tempputnode = tempp2[0]
+        #     tempp2.remove(tempputnode)
+
+        #     for i in range(0, notnonecnt+1):
+        #         tempc = Tour(self.nodestorage, False)
+        #         tempc.tour = child.tour.copy()
+        #         tempc.tour[i:i] = [tempputnode]
+        #         tempc.delnode(None)
+        #         tempc.tour += tempp2
+        #         for j in range(0, len(tempp2)):
+        #             tempc.delnode(None)
+        #         recorded[(tempputnode, i)] = tempc.getfitness()
+            
+        #     maxcfitness = list(recorded.values())
+        #     maxcfitness = maxcfitness[0]
+        #     for ele in recorded.keys():
+        #         if recorded[ele] >= maxcfitness:
+        #             maxcfitness = recorded[ele]
+            
+        #     maxcinfo = None
+        #     for ele in recorded.keys():
+        #         if recorded[ele] == maxcfitness:
+        #             maxcinfo = ele
+
+
+        #     #print('maxcinfo의정보:', maxcinfo)
+        #     child.tour[maxcinfo[1]:maxcinfo[1]] = [maxcinfo[0]]
+        #     child.delnode(None)
+        #     #print('child의정보:', child.tour)   
+        #     tempp2nodes.remove(maxcinfo[0])
+
+        #방법2////////////////////////////////////////////
+        #먼저child의 None을 전부삭제
+        while child.containing(None):
+            child.delnode(None)
+        
+        # print('차일드:', child.tour)
+
+        while len(tempp2nodes) != 0:
+            randidxofp2 = int(len(tempp2nodes) * random.random())
+            ele = tempp2nodes[randidxofp2]
+            tempp2nodes.remove(ele)
+            record = {}
+            for i in range(0, child.toursize()+1):
+                tempc = Tour(self.nodestorage, True)
+                tempc.tour = child.tour.copy()
+                tempc.tour[i:i] = [ele]
+                record[(ele, i)] = tempc.getfitness()
+            maxcfitness = max(record.values()) #maxfitness가 같아버리면 안되는데.
+            randombox = []
+            for rec in record.keys():
+                if record[rec] == maxcfitness:
+                    randombox.append(rec)
+            randomidx = int(random.random() * len(randombox))
+            temprec = randombox[randomidx]
+            child.tour[temprec[1]:temprec[1]] = [temprec[0]]
+    
+                       
+
+        # for i in range(0, parent2.toursize()):
+        #     if not child.containing(parent2.getnode(i)):
+        #         fitrecord = {}
+        #         for j in range(0, notnonecnt+1):
+        #             searchtour = Tour(self.nodestorage, False)
+        #             searchtour.tour = child.tour[0:notnonecnt]
+        #             searchtour.tour[j:j] = [parent2.getnode(i)]
+        #             for k in range(notnonecnt+2, parent2.toursize()):
+        #                 searchtour.tour[k] = 
+                            
+        #             fitrecord[(parent2.getnode(i), j)] = searchtour.getfitness()
+        #         maxfit = max(fitrecord.values())
+        #         for ele in fitrecord.keys():
+        #             if fitrecord[ele] == maxfit:
+        #                 putidx = ele
+        #         child.tour[putidx[1]:putidx[1]] = [putidx[0]]
+        #         child.delnode(None)
+        #         notnonecnt += 1
+        # for i in child.tour:
+        #     print(i.getname(), end='-')
+        # print('')
+
+                
+        
+        # #그리고 child의 남은 None부분에 parent2에서 순서교차로 가져옴
+        # for i in range(0, parent2.toursize()):
+        #     if not child.containing(parent2.getnode(i)):
+        #         for j in range(0, parent2.toursize()):
+        #             if child.getnode(j) == None:
+        #                 child.setnode(j, parent2.getnode(i))
+        #                 break
+
+        
         
         return child
 
@@ -420,6 +535,7 @@ class GeneticAlgo:
 def inspecttour(sometour, starttime):
     flag = 1 #1은 valid하다는의미
     currenttime = starttime
+    recordutil = 0
     print('시작시간:', currenttime)
     print('')
     for i in range(0, sometour.toursize()):
@@ -434,6 +550,7 @@ def inspecttour(sometour, starttime):
                 print('┏{}대기┓'.format(frompoint.getopen() - currenttime))
                 currenttime += frompoint.getopen() - currenttime
                 currenttime += frompoint.getstay()
+                recordutil += frompoint.getutil()
                 print('[{}]\t {}분 체류({})'.format(frompoint.getname(), frompoint.getstay(), currenttime))
                 currenttime += frompoint.timeTo(topoint)
                 print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
@@ -445,6 +562,7 @@ def inspecttour(sometour, starttime):
             else:
                 print('┏대기없음┓')
                 currenttime += frompoint.getstay()
+                recordutil += frompoint.getutil()
                 print('[{}]\t {}분 체류({})'.format(frompoint.getname(), frompoint.getstay(), currenttime))
                 currenttime += frompoint.timeTo(topoint)
                 print('{}({})'.format(frompoint.timeTo(topoint), currenttime))
@@ -458,6 +576,7 @@ def inspecttour(sometour, starttime):
             print('┏{}대기┓'.format(sometour.getnode(0).getopen() - currenttime))
             currenttime += sometour.getnode(0).getopen() - currenttime
             currenttime += sometour.getnode(0).getstay()
+            recordutil += sometour.getnode(0).getutil()
             print('[{}]\t {}분 체류({})'.format(sometour.getnode(0).getname(), sometour.getnode(0).getstay(), currenttime))
         elif sometour.getnode(0).getclose() < currenttime+sometour.getnode(0).getstay():
             flag = 0
@@ -465,6 +584,7 @@ def inspecttour(sometour, starttime):
         else:
             print('┏대기없음┓')
             currenttime += sometour.getnode(0).getstay()
+            recordutil += sometour.getnode(0).getutil()
             print('[{}]\t {}분 체류({})'.format(sometour.getnode(0).getname(), sometour.getnode(0).getstay(), currenttime))
     else:
         flag = 0
@@ -472,6 +592,7 @@ def inspecttour(sometour, starttime):
     print('')
     print('종료시간:', currenttime)
     print('총소요시간:', currenttime - starttime)
+    print('총유틸:', recordutil)
 
     if flag == 1:
         validity = 'Valid!'
@@ -484,13 +605,13 @@ if __name__ == '__main__':
     # testenv
     n_nodes = 10
     populationsize = 50
-    n_generation = 1000
+    n_generation = 2000
     worstnum = 500
     starttime = 480
 
     # testnodes
     tus =           Node(lon=139.741424, lat=35.699721, util=100, stay=90, open=480, close=840, name='tus')
-    moritower =     Node(lon=139.728871, lat=35.661302, util=1, stay=30, open=0, close=10000, name='moritower')
+    moritower =     Node(lon=139.728871, lat=35.661302, util=100000, stay=30, open=0, close=10000, name='moritower')
     ebisu =         Node(lon=139.714924, lat=35.643925, util=40, stay=30, open=720, close=840, name='ebisu')
     yoyogi =        Node(lon=139.701975, lat=35.682837, util=100, stay=60, open=1200, close=1440, name='yoyogi')
     shinanomachi =  Node(lon=139.719525, lat=35.680659, util=30, stay=10, open=480, close=660, name='shinanomachi')
@@ -515,21 +636,17 @@ if __name__ == '__main__':
     mapframenodestorage = NodeStorage()
     mapframenodestorage.storage = nodestorage.storage.copy()
 
-    # ask inspection of timeTo before evolution
-    print("you want to inspect timeTo of your custom tour?")
+    # ask before evolution
+    print("you want to inspect your custom tour?")
     answer = input()
     if answer == 'y':
-        temptour = Tour(nodestorage, False)
-        temptour.setnode(0, nakano)
-        temptour.setnode(1, hatsudai)
-        temptour.setnode(2, shinanomachi)
-        temptour.setnode(3, tus)
-        temptour.setnode(4, shinagawa)
-        temptour.setnode(5, ebisu)
-        temptour.setnode(6, moritower)
-        temptour.setnode(7, kichijoji)
-        temptour.setnode(8, yoyogi)
-        temptour.setnode(9, shimokitazawa)
+        temptour = Tour(nodestorage, True)
+        temptour.tour.append(moritower)
+        temptour.tour.append(shinagawa)
+        temptour.tour.append(tus)
+        temptour.tour.append(nakano)
+        temptour.tour.append(kichijoji)
+        temptour.tour.append(shimokitazawa)
         inspecttour(temptour, starttime)
         exit()
     else:
@@ -543,7 +660,7 @@ if __name__ == '__main__':
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
         for j in nodestorage.storage:       #테스트
-            print(j.getalpha(), end='/')    #테스트
+            print(j.getname(), ':', j.getalpha(), end='/')    #테스트
         print('\n')                         #테스트
 
     # get result from latest population
