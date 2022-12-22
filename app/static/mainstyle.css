@@ -1,5 +1,5 @@
 .sidebar{
-    width: 370px;
+    width: 449px;
     height: 100%;
     background-color: green;
 
@@ -30,12 +30,12 @@
 }
 
 .inputbox{
-    padding: 0px;
+    padding: 3px;
     border: 0px;
     margin: 0px;
 }
 
-.inputblank{
+.nodeblank{
     width: 70px;
     height: 30px;
 
@@ -44,51 +44,63 @@
     margin: -2px;
 }
 
-.submitblank{
-    width: 368px;
+.nodesubmit{
+    width: 446px;
     height: 30px;
     background-color: yellowgreen;
     display: block;
 
     position: relative;
     top: 5px;
+    right: 1.5px;
 
     border: none;
 
 }
-.submitblank:hover{
+.nodesubmit:hover{
     background-color: lightgreen;
 }
 
-.resetblank{
+.resetsubmit{
     width: 70px;
     height: 30px;
     background-color: darkslategray;
     
     position: absolute;
     bottom: 10px;
-    left: 200px;
+    left: 10px;
 
     border: none;
 
 }
-.resetblank:hover{
+.resetsubmit:hover{
     background-color: gray;
 }
 
-.searchblank{
+.starttimeblank{
+    width: 70px;
+    height: 30px;
+
+    position: absolute;
+    bottom: 10px;
+    left: 290px;
+
+    border: none;
+}
+
+.startsubmit{
     width: 70px;
     height: 30px;
     background-color: darkolivegreen;
     
     position: absolute;
     bottom: 10px;
-    left: 278px;
+    left: 368px;
 
     border: none;
 
 }
-.searchblank:hover{
+.startsubmit:hover{
     background-color: olive;
 }
 

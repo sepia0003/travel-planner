@@ -14,7 +14,7 @@ def main():
 @bp.route('/inputing', methods=['POST'])
 def inputing():
     try:
-        if request.form["resetflag"] == "초기화":
+        if request.form["resetflag"] == "Reset":
             db.resetlocationlist()
             destlist = db.getlocationlist() #get은 [[1row의values], [2row의values]]
         return render_template('index.html', destlist=destlist)

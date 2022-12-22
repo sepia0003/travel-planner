@@ -3,6 +3,7 @@ import requests
 import polyline
 import folium
 import random
+import time
 
 class Node:
     def __init__(self, lon=None, lat=None, util=None, stay=None, open=None ,close=None, alpha=1, name=None): # stay, open, close should be in min
@@ -335,10 +336,12 @@ class GeneticAlgo:
 
         for ele in badstackofnodes.keys():#ebisu가 앞조건에 안걸리니까 자꾸 kichijoji가 올라가는것 크로스오버때 p2에서 랜덤으로 가져와서 배치
             if badstackofnodes[ele] > oldpopulation.populationsize()/2 and ele.getutil() <= meanutil:
-                ele.alpha += 1
-            # elif ele.alpha != 0:
-            #     ele.alpha -= 1
-        
+                ele.alpha += 1                                      #### 여기가 조금 의심스러운데, M/2넘는 노드가 하나밖에없으면 
+            # elif ele.alpha != 0:                                  #### <=meanutill 이 반드시 성립하니까
+            #     ele.alpha -= 1                                    #### tw위반많이하는게 하나밖에없는경우는 알파가 반드시증가한다.
+                                                                    #### 그래도 되는건지 생각해봐야함.//
+                                                                    #### //P가 잘되어있는데 노드하나만 사라지면 되는상황이면 알파를 증가시켜서
+                                                                    #### //해당 노드를 삭제시켜줘야하므로 <=가 맞는것같다. 
         #GA객체만들때 입력한 최악수를 넘어가는 알파를 가진 노드를 nodestorage에서도, tour1~tour6에서도 삭제
         bannodes = []
         for i in range(0, self.nodestorage.storagesize()):
@@ -605,7 +608,7 @@ if __name__ == '__main__':
     # testenv
     n_nodes = 10
     populationsize = 50
-    n_generation = 2000
+    n_generation = 2500
     worstnum = 500
     starttime = 480
 
@@ -617,7 +620,7 @@ if __name__ == '__main__':
     shinanomachi =  Node(lon=139.719525, lat=35.680659, util=30, stay=10, open=480, close=660, name='shinanomachi')
     nakano =        Node(lon=139.666109, lat=35.705378, util=100, stay=120, open=660, close=1200, name='nakano')
     shimokitazawa = Node(lon=139.668144, lat=35.661516, util=300, stay=30, open=1200, close=1440, name='shimokitazawa')
-    hatsudai =      Node(lon=139.686511, lat=35.680789, util=50, stay=60, open=300, close=600, name='hatsudai')
+    hatsudai =      Node(lon=139.686511, lat=35.680789, util=1000, stay=60, open=300, close=660, name='hatsudai')
     kichijoji =     Node(lon=139.579722, lat=35.702351, util=1000, stay=0, open=720, close=1080, name='kichijoji')
     shinagawa =     Node(lon=139.736571, lat=35.628930, util=700, stay=10, open=480, close=600, name='shinagawa')
 
@@ -637,16 +640,13 @@ if __name__ == '__main__':
     mapframenodestorage.storage = nodestorage.storage.copy()
 
     # ask before evolution
-    print("you want to inspect your custom tour?")
+    print("you want to inspect your custom tour? (y/n)")
     answer = input()
     if answer == 'y':
         temptour = Tour(nodestorage, True)
         temptour.tour.append(moritower)
+        temptour.tour.append(hatsudai)
         temptour.tour.append(shinagawa)
-        temptour.tour.append(tus)
-        temptour.tour.append(nakano)
-        temptour.tour.append(kichijoji)
-        temptour.tour.append(shimokitazawa)
         inspecttour(temptour, starttime)
         exit()
     else:
@@ -657,11 +657,13 @@ if __name__ == '__main__':
     geneticalgo = GeneticAlgo(nodestorage, worstnum)
 
     # evolution
+    executionstart = time.time()
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
-        for j in nodestorage.storage:       #테스트
-            print(j.getname(), ':', j.getalpha(), end='/')    #테스트
-        print('\n')                         #테스트
+        # for j in nodestorage.storage:       #테스트
+        #     print(j.getname(), ':', j.getalpha(), end='/')    #테스트
+        # print('\n')                         #테스트
+    executionend = time.time()
 
     # get result from latest population
     result = population.getmostfittour()
@@ -669,6 +671,9 @@ if __name__ == '__main__':
 
     # inspect result
     inspecttour(result, starttime)
+
+    # print exection time
+    print("{:.4f} sec elapsed".format(executionend-executionstart))
 
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?

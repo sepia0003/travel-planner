@@ -14,6 +14,7 @@ class Database:
                 lon VARCHAR(256) NOT NULL,
                 lat VARCHAR(256) NOT NULL,
                 util VARCHAR(256) NOT NULL,
+                stay VARCHAR(256) NOT NULL,
                 open VARCHAR(256) NOT NULL,
                 close VARCHAR(256) NOT NULL
             );
@@ -23,8 +24,8 @@ class Database:
 
     def addlocation(self, location_info): #c
         query = '''
-            INSERT INTO locationtable(lon, lat, util, open, close)
-            VALUES(%s, %s, %s, %s, %s);
+            INSERT INTO locationtable(lon, lat, util, stay, open, close)
+            VALUES(%s, %s, %s, %s, %s, %s);
         '''
         self.cursor.execute(query, location_info)
         self.conn.commit()

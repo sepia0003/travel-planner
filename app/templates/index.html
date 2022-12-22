@@ -8,12 +8,13 @@
     <body>
         <aside class="sidebar">
             <form class="inputbox" action="/inputing" method="post">
-                <input class="inputblank" name="lon" type="number" placeholder="경도" required="">
-                <input class="inputblank" name="lan" type="number" placeholder="위도" required="">
-                <input class="inputblank" name="util" type="number" placeholder="효용" required="">
-                <input class="inputblank" name="open" type="time" placeholder="오픈" required="">
-                <input class="inputblank" name="close" type="time" placeholder="클로즈" required="">
-                <input class="submitblank" type="submit" value="등록">
+                <input class="nodeblank" name="lon" type="number" placeholder="lon" required="">
+                <input class="nodeblank" name="lan" type="number" placeholder="lat" required="">
+                <input class="nodeblank" name="util" type="number" placeholder="util" required="">
+                <input class="nodeblank" name="stay" type="number" placeholder="stay" required="">
+                <input class="nodeblank" name="open" type="time" placeholder="open" required="">
+                <input class="nodeblank" name="close" type="time" placeholder="close" required="">
+                <input class="nodesubmit" type="submit" value="Add">
             </form>
             <div>
                 {%for i in destlist%}
@@ -21,10 +22,11 @@
                 {%endfor%}
             </div>
             <form action="/inputing" method="post">
-                <input class="resetblank" name="resetflag" type="submit" value="초기화">
+                <input class="resetsubmit" name="resetflag" type="submit" value="Reset">
             </form>
             <form action="/searching" method="post">
-                <input class="searchblank" name="searchflag" type="submit" value="탐색시작">
+                <input class="starttimeblank" name="starttime" type="time" placeholder="starttime" required="">
+                <input class="startsubmit" name="searchflag" type="submit" value="Start">
             </form>
         </aside>
 
