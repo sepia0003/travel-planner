@@ -8,6 +8,20 @@
         <script type="text/javascript" src="../static/mainscript.js"></script>
     </head>
     <body>
+        <script>
+            let masking = document.createElement('div');
+            masking.setAttribute('class', 'masking');
+            masking.setAttribute('style', 'width: 100%; height: 100%; background-color: #000000; opacity: 0.5; position: absolute; top: 0px; left: 0px; z-index: 9999;');
+            masking.textContent = 'Calculating optimal tour';
+            document.body.appendChild(masking)
+        </script>
+        {%if demask == True%}
+            <script>
+                let masking = document.getElementsByClassName('masking')
+                document.body.removeChild(masking)
+            </script>
+        {%endif%}
+
         <aside class="sidebar">
             <form class="inputbox" action="/inputing" method="post">
                 <input class="nodeblank" name="lon" type="number" placeholder="lon" required="">

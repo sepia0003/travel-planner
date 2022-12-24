@@ -22,6 +22,7 @@ mapdata/
 /app/static/t_mainstyle.css
 /app/static/t_image.png
 /app/static/t_sound.mp3
+/app/static/t_mainscript.js
 /app/templates/t_index.html
 /app/Models/t_folder
 /app/Models/t_dbModule.py

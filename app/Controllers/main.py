@@ -23,6 +23,18 @@ def inputing():
         destlist = db.getlocationlist()
         return render_template('index.html', destlist=destlist)
 
+@bp.route('/searching', methods=['POST'])
+def searching():
+    try:
+        if request.form["resetflag"] == "Reset":
+            db.resetlocationlist()
+            destlist = db.getlocationlist() #get은 [[1row의values], [2row의values]]
+        return render_template('searching.html', destlist=destlist)
+    except:
+        db.addlocation(tuple(request.form.values())) #튜플형태로 반환해줘야함
+        destlist = db.getlocationlist()
+        return render_template('index.html', destlist=destlist)
+
 
 
 
