@@ -2,7 +2,6 @@
 <html lang="jp">
     <head>
         <meta charset="UTF-8">
-        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
         <title>travel-planner_main</title>
         <link rel="stylesheet" href="../static/mainstyle.css">
         <script type="text/javascript" src="../static/mainscript.js"></script>
@@ -26,10 +25,13 @@
             <form action="/inputing" method="post">
                 <input class="resetsubmit" name="resetflag" type="submit" value="Reset">
             </form>
-            <form action="/searching" method="post">
+            
+            <input class="startsubmit" name="startflag" type="button" onclick="getgaModuleresult();">
+            <!-- 우선 서버에 요청하고 응답을 받아오는것부터 비동기로 처리해보자 위의 form태그들은 이거하고나서 -->
+            <!-- <form action="/searching" method="post">
                 <input class="starttimeblank" name="starttime" type="time" placeholder="starttime" required="">
                 <input class="startsubmit" name="startflag" type="submit" value="Start">
-            </form>
+            </form> -->
         </aside>
 
         <section class="mapscreen">
