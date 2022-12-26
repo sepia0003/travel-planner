@@ -9,8 +9,8 @@
     <body>
         <aside class="sidebar">
             <form class="inputbox" action="/inputing" method="post">
-                <input class="nodeblank" name="lon" type="number" placeholder="lon" required="">
-                <input class="nodeblank" name="lan" type="number" placeholder="lat" required="">
+                <input class="nodeblank" name="lon" type="number" step="0.000001" placeholder="lon" required="">
+                <input class="nodeblank" name="lan" type="number" step="0.000001" placeholder="lat" required="">
                 <input class="nodeblank" name="util" type="number" placeholder="util" required="">
                 <input class="nodeblank" name="stay" type="number" placeholder="stay" required="">
                 <input class="nodeblank" name="open" type="time" placeholder="open" required="">
@@ -26,7 +26,10 @@
                 <input class="resetsubmit" name="resetflag" type="submit" value="Reset">
             </form>
             
-            <input class="startsubmit" name="startflag" type="button" onclick="getgaModuleresult();">
+            <form>
+                <input class="starttimeblank" name="starttime" type="time" required="">
+                <input class="startsubmit" name="startflag" type="submit" onclick="getgaModuleresult();">
+            </form>
             <!-- 우선 서버에 요청하고 응답을 받아오는것부터 비동기로 처리해보자 위의 form태그들은 이거하고나서 -->
             <!-- <form action="/searching" method="post">
                 <input class="starttimeblank" name="starttime" type="time" placeholder="starttime" required="">

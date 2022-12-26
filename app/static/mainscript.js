@@ -15,11 +15,18 @@ function demask_screen(){
 
 function getresult_promise(){
     return new Promise(function (resolve, reject){
-        // ajax를 통한 응답지도이미지
-        ajax('url',
-        function (response){
-            resolve(response);
-        });
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", "/searching");
+        xhr.send();
+
+        xhr.onload = function (){
+            if (xhr.status === 200){
+                resolve(xhr.response)
+            }
+            else{
+                reject(new Error(xhr.status))
+            }
+        }
     });
 }
 

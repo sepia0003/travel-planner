@@ -1,6 +1,8 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for
 from flask import current_app as app
 from ..Models.dbModule import Database
+from ..Models.gaModule_tw_md_alpha_wait import Node, NodeStorage, Tour, Population, GeneticAlgo
+import matplotlib.pyplot as plt
 
 bp = Blueprint('main', __name__, url_prefix='/')
 db = Database()
@@ -16,24 +18,66 @@ def inputing():
     try:
         if request.form["resetflag"] == "Reset":
             db.resetlocationlist()
-            destlist = db.getlocationlist() #get은 [[1row의values], [2row의values]]
+            destlist = db.getlocationlist()                 #get은 [[1row의values], [2row의values]]
         return render_template('index.html', destlist=destlist)
     except:
-        db.addlocation(tuple(request.form.values())) #튜플형태로 반환해줘야함
+        db.addlocation(tuple(request.form.values()))        #튜플형태로 반환해줘야함
         destlist = db.getlocationlist()
         return render_template('index.html', destlist=destlist)
 
-@bp.route('/searching', methods=['POST'])
+@bp.route('/searching', methods=['GET'])
 def searching():
-    try:
-        if request.form["resetflag"] == "Reset":
-            db.resetlocationlist()
-            destlist = db.getlocationlist() #get은 [[1row의values], [2row의values]]
-        return render_template('searching.html', destlist=destlist)
-    except:
-        db.addlocation(tuple(request.form.values())) #튜플형태로 반환해줘야함
-        destlist = db.getlocationlist()
-        return render_template('index.html', destlist=destlist)
+    destlist = db.getlocationlist()
+    populationsize = 50
+    n_generation = 2500
+    worstnum = 500
+    starttime = 480 #수정필요
+    nodestorage = NodeStorage()
+    nodestorage.starttime = starttime
+
+    for ele in destlist:
+        splittemp1 = ele[5].split(':')
+        ele[5] = int(splittemp1[0]) * 60 + int(splittemp1[1])
+        splittemp2 = ele[6].split(':')
+        ele[6] = int(splittemp2[0]) * 60 + int(splittemp2[1])
+
+    for ele in destlist:
+        nodestorage.addnode(Node(lon=float(ele[1]), lat=float(ele[2]), util=int(ele[3]), stay=int(ele[4]), open=ele[5], close=ele[6]))
+    mapframenodestorage = NodeStorage()
+    mapframenodestorage.storage = nodestorage.storage.copy()
+
+    population = Population(nodestorage, populationsize=populationsize, init=True)
+    geneticalgo = GeneticAlgo(nodestorage, worstnum)
+
+    for i in range(n_generation):
+        population = geneticalgo.evolvepopulation(population)
+    
+    result = population.getmostfittour()
+    result_justlist = population.getmostfittour().tour
+
+    lonlist = []
+    latlist = []
+    for i in result_justlist:
+        lonlist.append(i.getlon())
+        latlist.append(i.getlat())
+    for i in range(0, len(result_justlist)):    
+        if i+1<len(result_justlist):
+            plt.plot([lonlist[i], lonlist[i+1]], [latlist[i], latlist[i+1]], color="blue")
+            plt.text(lonlist[i], latlist[i], '{}'.format(i))
+        else:
+            plt.plot([lonlist[i], lonlist[0]], [latlist[i], latlist[0]], color='red')
+            plt.text(lonlist[i], latlist[i], '{}'.format(i))
+
+    resultutil = 0
+    for i in result.tour:
+        resultutil += i.getutil()
+    resultutil += result.tour[0].getutil()
+    plt.text(139.60, 35.64, '{}'.format(resultutil))
+
+    plt.savefig('map(gaModlue_tw_md_alpha).png')
+
+
+
 
 
 
