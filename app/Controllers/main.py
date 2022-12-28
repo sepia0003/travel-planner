@@ -25,8 +25,10 @@ def inputing():
         destlist = db.getlocationlist()
         return render_template('index.html', destlist=destlist)
 
-@bp.route('/searching', methods=['GET'])
+@bp.route('/searching', methods=['POST'])
 def searching():
+    print('starttime가져왔나확인', request.get_json())
+
     destlist = db.getlocationlist()
     populationsize = 50
     n_generation = 2500

@@ -13,29 +13,39 @@ function demask_screen(){
     document.body.removeChild(masking)
 }
 
-function getresult_promise(){
-    return new Promise(function (resolve, reject){
-        let xhr = new XMLHttpRequest();
-        xhr.open("GET", "/searching");
-        xhr.send();
+// function getresult_promise(){
+//     return new Promise(function (resolve, reject){
+//         let xhr = new XMLHttpRequest();
+//         xhr.open("GET", "/searching");
+//         xhr.send();
 
-        xhr.onload = function (){
-            if (xhr.status === 200){
-                resolve(xhr.response)
-            }
-            else{
-                reject(new Error(xhr.status))
-            }
-        }
-    });
-}
+//         xhr.onload = function (){
+//             if (xhr.status === 200){
+//                 resolve(xhr.response)
+//             }
+//             else{
+//                 reject(new Error(xhr.status))
+//             }
+//         }
+//     });
+// }
 
 async function getgaModuleresult(){
     mask_screen();
 
-    let resultimage = await getresult_promise();
+    let starttime = document.getElementsByClassName("starttime")
+    let data = {
+        starttime: starttime.value
+    }
 
-    let sectiontag = document.getElementsByClassName('mapscreen')
-    sectiontag.appendChild(resultimage)
+    let getresult = await fetch("http://localhost/searching", {
+        method : "POST",
+        headers : {
+            "Content-Type":"application/json;"
+        },
+        body : JSON.stringify(data)
+    })
+    .then(result=>'받은 이미지를 html에 띄우기')
+
     demask_screen();
 }
