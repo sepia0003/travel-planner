@@ -17,6 +17,8 @@
                 <input class="input" name="close" type="time" placeholder="close" required="">
                 <input class="inputboxsubmit" type="submit" value="Add">
             </form>
+            
+
             <div>
                 {%for i in destlist%}
                     <li>{{i}}</li>
@@ -28,14 +30,12 @@
             
             <!-- 우선 서버에 요청하고 응답을 받아오는것부터 비동기로 처리해보자 위의 form태그들은 이거하고나서 -->
             <!-- 위의 추가하거나 리셋버튼누를때마다 /inputing 으로 리다이렉트되는것 없애고 비동기로바꿔야함 -->
-            <input class="input_starttime" name="starttime" type="time" required="">
-            <input class="startbutton" name="startflag" type="button" onclick="getgaModuleresult();">
+            <input id="starttime" name="starttime" type="time">
+            <input id="startbutton" name="startbutton" type="button" value="Start" onclick="getgaModuleresult()">
         </aside>
 
         <section class="mapscreen">
             someresult
-
-            
 
         </section>
 

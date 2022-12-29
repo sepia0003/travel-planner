@@ -77,18 +77,18 @@
     background-color: gray;
 }
 
-.input_starttime{
-    width: 70px;
-    height: 30px;
+#starttime{
+    width: 66px;
+    height: 26px;
 
     position: absolute;
     bottom: 10px;
     left: 290px;
 
-    border: none;
+    border: 2px solid white;
 }
 
-.startbutton{
+#startbutton{
     width: 70px;
     height: 30px;
     background-color: darkolivegreen;
@@ -100,7 +100,7 @@
     border: none;
 
 }
-.startbutton:hover{
+#startbutton:hover{
     background-color: olive;
 }
 
