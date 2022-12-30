@@ -27,21 +27,22 @@ def inputing():
 
 @bp.route('/searching', methods=['POST'])
 def searching():
-    print('starttime가져왔나확인', request.get_json())
+    splittemp0 = request.get_json()['starttime'].split(':')
+    makemin = int(splittemp0[0])*60 + int(splittemp0[1])
 
     destlist = db.getlocationlist()
     populationsize = 50
     n_generation = 2500
     worstnum = 500
-    starttime = 480 #수정필요
+    starttime = makemin
     nodestorage = NodeStorage()
     nodestorage.starttime = starttime
 
     for ele in destlist:
         splittemp1 = ele[5].split(':')
-        ele[5] = int(splittemp1[0]) * 60 + int(splittemp1[1])
+        ele[5] = int(splittemp1[0])*60 + int(splittemp1[1])
         splittemp2 = ele[6].split(':')
-        ele[6] = int(splittemp2[0]) * 60 + int(splittemp2[1])
+        ele[6] = int(splittemp2[0])*60 + int(splittemp2[1])
 
     for ele in destlist:
         nodestorage.addnode(Node(lon=float(ele[1]), lat=float(ele[2]), util=int(ele[3]), stay=int(ele[4]), open=ele[5], close=ele[6]))
@@ -81,7 +82,8 @@ def searching():
 
 
 
-
+#request.get_json()은 클라이언트가 post할때 body에 실어보낸 json을 딕셔너리객체로 바꿔주는 역할을 한다.
+#즉, request.get_json()자체가 딕셔너리
 
 
 #request.form은 html에서 input태그내의 name키에해당하는밸류, value키에해당하는밸류

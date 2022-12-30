@@ -7,34 +7,28 @@
         <script type="text/javascript" src="../static/mainscript.js"></script>
     </head>
     <body>
-        <aside class="sidebar">
-            <form class="inputbox" action="/inputing" method="post">
+        <aside id="aside">
+            <div id="addingbox">
                 <input class="input" name="lon" type="number" step="0.000001" placeholder="lon" required="">
                 <input class="input" name="lan" type="number" step="0.000001" placeholder="lat" required="">
                 <input class="input" name="util" type="number" placeholder="util" required="">
                 <input class="input" name="stay" type="number" placeholder="stay" required="">
                 <input class="input" name="open" type="time" placeholder="open" required="">
                 <input class="input" name="close" type="time" placeholder="close" required="">
-                <input class="inputboxsubmit" type="submit" value="Add">
-            </form>
-            
-
-            <div>
-                {%for i in destlist%}
-                    <li>{{i}}</li>
-                {%endfor%}
+                <input id="addingboxbutton" type="button" value="Add">
             </div>
-            <form action="/inputing" method="post">
-                <input class="resetsubmit" name="resetflag" type="submit" value="Reset">
-            </form>
-            
-            <!-- 우선 서버에 요청하고 응답을 받아오는것부터 비동기로 처리해보자 위의 form태그들은 이거하고나서 -->
-            <!-- 위의 추가하거나 리셋버튼누를때마다 /inputing 으로 리다이렉트되는것 없애고 비동기로바꿔야함 -->
+            <div id="destbox">
+                <!-- {%for i in destlist%}
+                    <li>{{i}}</li>
+                {%endfor%} -->
+            </div>
+
+            <input id="resetbutton" name="resetbutton" type="button" value="Reset">
             <input id="starttime" name="starttime" type="time">
             <input id="startbutton" name="startbutton" type="button" value="Start" onclick="getgaModuleresult()">
         </aside>
 
-        <section class="mapscreen">
+        <section id="section">
             someresult
 
         </section>

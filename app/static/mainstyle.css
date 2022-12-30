@@ -1,4 +1,4 @@
-.sidebar{
+#aside{
     width: 449px;
     height: 100%;
     background-color: green;
@@ -13,7 +13,7 @@
     transition: all 0.5s ease;
 }
 
-.mapscreen{
+#section{
     box-sizing: border-box;
     width: 100%;
     height: 100%;
@@ -29,7 +29,7 @@
     transition: all 0.5s ease;
 }
 
-.inputbox{
+#addingbox{
     padding: 3px;
     border: 0px;
     margin: 0px;
@@ -44,7 +44,7 @@
     margin: -2px;
 }
 
-.inputboxsubmit{
+#addingboxbutton{
     width: 446px;
     height: 30px;
     background-color: yellowgreen;
@@ -57,11 +57,11 @@
     border: none;
 
 }
-.inputboxsubmit:hover{
+#addingboxbutton:hover{
     background-color: lightgreen;
 }
 
-.resetsubmit{
+#resetbutton{
     width: 70px;
     height: 30px;
     background-color: darkslategray;
@@ -73,7 +73,7 @@
     border: none;
 
 }
-.resetsubmit:hover{
+#resetbutton:hover{
     background-color: gray;
 }
 

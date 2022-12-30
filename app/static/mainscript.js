@@ -38,12 +38,12 @@ async function getgaModuleresult(){
             starttime: document.getElementById('starttime').value
         }
 
-        let getresult = await fetch("http://localhost/searching", {
-            method : "POST",
-            headers : {
-                "Content-Type":"application/json;"
+        let getresult = await fetch("http://192.168.1.3:80/searching", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
             },
-            body : JSON.stringify(data)
+            body: JSON.stringify(data)
         })
         .then(result=>'받은 이미지를 html에 띄우기')
 
