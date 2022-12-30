@@ -13,17 +13,17 @@ except: pass
 def main():
     return render_template('index.html')
 
-@bp.route('/inputing', methods=['POST'])
-def inputing():
-    try:
-        if request.form["resetflag"] == "Reset":
-            db.resetlocationlist()
-            destlist = db.getlocationlist()                 #get은 [[1row의values], [2row의values]]
-        return render_template('index.html', destlist=destlist)
-    except:
-        db.addlocation(tuple(request.form.values()))        #튜플형태로 반환해줘야함
-        destlist = db.getlocationlist()
-        return render_template('index.html', destlist=destlist)
+@bp.route('/adding', methods=['POST'])
+def adding():
+    db.addlocation(tuple(request.get_json().values()))        #튜플형태로 반환해줘야함
+    destlist = db.getlocationlist()                           #get은 [[1row의values], [2row의values]]
+    return destlist
+
+@bp.route('/reset', methods=['POST'])
+def reset():
+    db.resetlocationlist()
+    destlist = db.getlocationlist()         #get은 [[1row의values], [2row의values]]
+    return destlist
 
 @bp.route('/searching', methods=['POST'])
 def searching():

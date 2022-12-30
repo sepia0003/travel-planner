@@ -9,21 +9,19 @@
     <body>
         <aside id="aside">
             <div id="addingbox">
-                <input class="input" name="lon" type="number" step="0.000001" placeholder="lon" required="">
-                <input class="input" name="lan" type="number" step="0.000001" placeholder="lat" required="">
-                <input class="input" name="util" type="number" placeholder="util" required="">
-                <input class="input" name="stay" type="number" placeholder="stay" required="">
-                <input class="input" name="open" type="time" placeholder="open" required="">
-                <input class="input" name="close" type="time" placeholder="close" required="">
-                <input id="addingboxbutton" type="button" value="Add">
+                <input class="input" id="lon" type="number" step="0.000001" placeholder="lon" required="">
+                <input class="input" id="lat" type="number" step="0.000001" placeholder="lat" required="">
+                <input class="input" id="util" type="number" placeholder="util" required="">
+                <input class="input" id="stay" type="number" placeholder="stay" required="">
+                <input class="input" id="open" type="time" placeholder="open" required="">
+                <input class="input" id="close" type="time" placeholder="close" required="">
+                <input id="addingboxbutton" type="button" value="Add" onclick="adddest()">
             </div>
             <div id="destbox">
-                <!-- {%for i in destlist%}
-                    <li>{{i}}</li>
-                {%endfor%} -->
+                
             </div>
 
-            <input id="resetbutton" name="resetbutton" type="button" value="Reset">
+            <input id="resetbutton" name="resetbutton" type="button" value="Reset" onclick="resetdest()">
             <input id="starttime" name="starttime" type="time">
             <input id="startbutton" name="startbutton" type="button" value="Start" onclick="getgaModuleresult()">
         </aside>
