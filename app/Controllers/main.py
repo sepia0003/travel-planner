@@ -1,4 +1,4 @@
-from flask import Blueprint, request, render_template, flash, redirect, url_for
+from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
 from flask import current_app as app
 from ..Models.dbModule import Database
 from ..Models.gaModule_tw_md_alpha_wait import Node, NodeStorage, Tour, Population, GeneticAlgo
@@ -16,14 +16,17 @@ def main():
 @bp.route('/adding', methods=['POST'])
 def adding():
     db.addlocation(tuple(request.get_json().values()))        #튜플형태로 반환해줘야함
-    destlist = db.getlocationlist()                           #get은 [[1row의values], [2row의values]]
-    return destlist
+    destlist = db.getlocationlist()                     #get은 [{1row의 key:val, ...}, {2row의 key:val, ...}]의 리스트
+    tempdict = {}
+    tempdict['data'] = destlist
+    return jsonify(tempdict)                #jsonify(딕셔너리객체) 는 해당딕셔너리를 json화 시킨다음에 response 의 body에도 탑재해주고 headers도 "Content-Type": "application/json" 를 넣어준 객체를 반환한다.
 
-@bp.route('/reset', methods=['POST'])
+@bp.route('/reset', methods=['GET'])
 def reset():
     db.resetlocationlist()
-    destlist = db.getlocationlist()         #get은 [[1row의values], [2row의values]]
-    return destlist
+    tempdict = {}
+    tempdict['data'] = ''       #일단 리턴값으로 빈값을 리턴. 이렇게 작위적으로 리턴하지않는방법을 찾아보자
+    return jsonify(tempdict)
 
 @bp.route('/searching', methods=['POST'])
 def searching():

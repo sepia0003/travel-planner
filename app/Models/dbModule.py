@@ -37,9 +37,10 @@ class Database:
         '''
         self.cursor.execute(query)
         fetchalllist = self.cursor.fetchall()
-        result = []
-        for ele in fetchalllist:
-            result.append(list(ele.values()))
+        # result = []
+        # for ele in fetchalllist:
+        #     result.append(list(ele.values()))
+        result = fetchalllist
 
         return result
 

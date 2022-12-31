@@ -75,9 +75,23 @@ async function adddest(){
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data) //body에 문자열을 실어보내는것이다. JSON.stringify()는 문자열이다
         })
-        .then(response => '받은리스트를destbox에 띄우기')
+        .then(response => response.json()) //서버에서 온 응답인 response는 method, headers, body 등의 정보가 들어있는 리스폰스객체이기때문에 response에 .json()메소드를 사용해서 json부분만을 딕셔너리객체로 가져오는것을 결과로 이행하는 또다른 프로미스를 반환함.
+        .then(data => { //data는 {"data": [{1row의 key:val, ...}, {2row의 key:val, ...}]}의 딕셔너리객체
+            const destbox = document.getElementById('destbox')
+            while (destbox.firstChild){
+                destbox.removeChild(destbox.firstChild)
+            }
+            temp = data["data"] //temp는 [{1row의 key:val, ...}, {2row의 key:val, ...}] 리스트
+            for (let i=0; i<temp.length; i++){
+                let dest = document.createElement('div')
+                // dest.setAttribute('class', 'masking')
+                // dest.setAttribute('style', 'width: 100%; height: 100%; background-color: #000000; opacity: 0.5; position: absolute; top: 0px; left: 0px; z-index: 9999; text-align: center;')
+                dest.textContent = Object.values(temp[i])       //values의 값들이 뒤죽박죽인 상태 고쳐야함
+                destbox.append(dest)
+            }
+        })
 
     }
     else{
@@ -86,12 +100,10 @@ async function adddest(){
 }
 
 async function resetdest(){
-    let reset = await fetch("http://192.168.1.3:80/reset", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data) //이부분 고치기 data가 있을수 없으니
-    })
-    .then(response => '받은리스트를destbox에 띄우기')
+    let reset = await fetch("http://192.168.1.3:80/reset")        //근데 굳이 reset = 으로 선언하는이유가뭐지
+    .then()
+    const destbox = document.getElementById('destbox')
+    while (destbox.firstChild){
+        destbox.removeChild(destbox.firstChild)
+    }
 }
