@@ -13,23 +13,6 @@ function demask_screen(){
     document.body.removeChild(masking)
 }
 
-// function getresult_promise(){
-//     return new Promise(function (resolve, reject){
-//         let xhr = new XMLHttpRequest();
-//         xhr.open("GET", "/searching");
-//         xhr.send();
-
-//         xhr.onload = function (){
-//             if (xhr.status === 200){
-//                 resolve(xhr.response)
-//             }
-//             else{
-//                 reject(new Error(xhr.status))
-//             }
-//         }
-//     });
-// }
-
 async function getgaModuleresult(){
     if (document.getElementById('starttime').value !== ""){
         mask_screen()
@@ -38,14 +21,14 @@ async function getgaModuleresult(){
             starttime: document.getElementById('starttime').value
         }
 
-        let searching = await fetch("http://192.168.1.3:80/searching", {
+        await fetch("http://192.168.1.3:80/searching", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify(data)
         })
-        .then(result=>'받은 이미지를 html에 띄우기')
+        .then(result=>'받은 이미지를 html에 띄우기') //folium으로 만든 html지도를 flask에서 문자열로 받아와서 그걸 오른쪽 section에 띄우도록해보자
 
         demask_screen()
     }
@@ -70,7 +53,7 @@ async function adddest(){
             close: document.getElementById('close').value
         }
         
-        let adding = await fetch("http://192.168.1.3:80/adding", {
+        await fetch("http://192.168.1.3:80/adding", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -100,7 +83,7 @@ async function adddest(){
 }
 
 async function resetdest(){
-    let reset = await fetch("http://192.168.1.3:80/reset")        //근데 굳이 reset = 으로 선언하는이유가뭐지
+    await fetch("http://192.168.1.3:80/reset")       
     .then()
     const destbox = document.getElementById('destbox')
     while (destbox.firstChild){
