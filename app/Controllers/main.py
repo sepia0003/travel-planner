@@ -17,8 +17,7 @@ def main():
 def adding():
     db.addlocation(tuple(request.get_json().values()))        #튜플형태로 반환해줘야함
     destlist = db.getlocationlist()                     #get은 [{1row의 key:val, ...}, {2row의 key:val, ...}]의 리스트
-    tempdict = {}
-    tempdict['data'] = destlist
+    tempdict = {'data': destlist}
     return jsonify(tempdict)                #jsonify(딕셔너리객체) 는 해당딕셔너리를 json화 시킨다음에 response 의 body에도 탑재해주고 headers도 "Content-Type": "application/json" 를 넣어준 객체를 반환한다.
 
 @bp.route('/reset', methods=['POST'])
@@ -59,6 +58,11 @@ def searching():
     resulttour = population.getmostfittour()
 
     makemap(mapframenodestorage, resulttour)
+
+    htmlmapstr = open('resultmap.html', 'r').read().replace('<!DOCTYPE html>', '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '')
+    tempdict = {'data': htmlmapstr}
+
+    return jsonify(tempdict)
 
     #cwd에서 resultmap.html을 불러와서/ 불러온것을 json형식으로 변형한뒤/ jsonify로 리스폰스
 

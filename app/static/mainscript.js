@@ -1,6 +1,6 @@
 function mask_screen(){
     let masking = document.createElement('div')
-    masking.setAttribute('class', 'masking')
+    masking.setAttribute('id', 'masking')
     masking.setAttribute('style', 'width: 100%; height: 100%; background-color: #000000; opacity: 0.5; position: absolute; top: 0px; left: 0px; z-index: 9999; text-align: center;')
     masking.textContent = 'Calculating optimal tour'
 
@@ -8,7 +8,7 @@ function mask_screen(){
 }
 
 function demask_screen(){
-    let masking = document.getElementsByClassName('masking')
+    let masking = document.getElementById('masking')
 
     document.body.removeChild(masking)
 }
@@ -20,7 +20,12 @@ async function getgaModuleresult(){
         let qs_starttime = "?starttime=" + document.getElementById('starttime').value
 
         await fetch("http://192.168.1.3:80/searching" + qs_starttime)
-        .then(result=>'받은 이미지를 html에 띄우기') //folium으로 만든 html지도를 flask에서 문자열로 받아와서 그걸 오른쪽 section에 띄우도록해보자
+        .then(response => response.json())
+        .then(data => { //data는 {"data": html문서내용}의 딕셔너리 객체
+            document.getElementById('section').innerHTML = data["data"]
+        })
+        
+        //folium으로 만든 html지도를 flask에서 문자열로 받아와서 그걸 오른쪽 section에 띄우도록해보자 section으로 엘리먼트잡고 innerHTML = "가져온 html"(스트링으로 묶는다)
 
         demask_screen()
     }
