@@ -17,17 +17,9 @@ async function getgaModuleresult(){
     if (document.getElementById('starttime').value !== ""){
         mask_screen()
 
-        let data = {
-            starttime: document.getElementById('starttime').value
-        }
+        let qs_starttime = "?starttime=" + document.getElementById('starttime').value
 
-        await fetch("http://192.168.1.3:80/searching", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        })
+        await fetch("http://192.168.1.3:80/searching" + qs_starttime)
         .then(result=>'받은 이미지를 html에 띄우기') //folium으로 만든 html지도를 flask에서 문자열로 받아와서 그걸 오른쪽 section에 띄우도록해보자
 
         demask_screen()
@@ -83,7 +75,9 @@ async function adddest(){
 }
 
 async function resetdest(){
-    await fetch("http://192.168.1.3:80/reset")       
+    await fetch("http://192.168.1.3:80/reset", {
+        method: "POST"
+    })       
     .then()
     const destbox = document.getElementById('destbox')
     while (destbox.firstChild){

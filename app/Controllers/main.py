@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
 from flask import current_app as app
 from ..Models.dbModule import Database
-from ..Models.gaModule_tw_md_alpha_wait import Node, NodeStorage, Tour, Population, GeneticAlgo
+from ..Models.gaModule_tw_md_alpha_wait import Node, NodeStorage, Tour, Population, GeneticAlgo, makemap
 import matplotlib.pyplot as plt
 
 bp = Blueprint('main', __name__, url_prefix='/')
@@ -9,7 +9,7 @@ db = Database()
 try: db.maketable("locationtable")
 except: pass
 
-@bp.route('/', methods=['GET'])
+@bp.route('/', methods=['GET'])                 #GET은 서버의 값이나 상태를 바꾸지않고, POST는 바꾼다.
 def main():
     return render_template('index.html')
 
@@ -21,34 +21,32 @@ def adding():
     tempdict['data'] = destlist
     return jsonify(tempdict)                #jsonify(딕셔너리객체) 는 해당딕셔너리를 json화 시킨다음에 response 의 body에도 탑재해주고 headers도 "Content-Type": "application/json" 를 넣어준 객체를 반환한다.
 
-@bp.route('/reset', methods=['GET'])
+@bp.route('/reset', methods=['POST'])
 def reset():
     db.resetlocationlist()
     tempdict = {}
     tempdict['data'] = ''       #일단 리턴값으로 빈값을 리턴. 이렇게 작위적으로 리턴하지않는방법을 찾아보자
     return jsonify(tempdict)
 
-@bp.route('/searching', methods=['POST'])
+@bp.route('/searching', methods=['GET'])
 def searching():
-    splittemp0 = request.get_json()['starttime'].split(':')
-    makemin = int(splittemp0[0])*60 + int(splittemp0[1])
-
-    destlist = db.getlocationlist()
     populationsize = 50
     n_generation = 2500
     worstnum = 500
-    starttime = makemin
+    splittemp0 = request.args.get('starttime').split(':')
+    starttime = int(splittemp0[0])*60 + int(splittemp0[1])
+
+    destlist = db.getlocationlist() #[{row1에대한 field,val}, {row2에대한 field,val}, ...]
+
     nodestorage = NodeStorage()
     nodestorage.starttime = starttime
-
     for ele in destlist:
-        splittemp1 = ele[5].split(':')
-        ele[5] = int(splittemp1[0])*60 + int(splittemp1[1])
-        splittemp2 = ele[6].split(':')
-        ele[6] = int(splittemp2[0])*60 + int(splittemp2[1])
-
+        splittemp1 = ele['open'].split(':')
+        ele['open'] = int(splittemp1[0])*60 + int(splittemp1[1])
+        splittemp2 = ele['close'].split(':')
+        ele['close'] = int(splittemp2[0])*60 + int(splittemp2[1])
     for ele in destlist:
-        nodestorage.addnode(Node(lon=float(ele[1]), lat=float(ele[2]), util=int(ele[3]), stay=int(ele[4]), open=ele[5], close=ele[6]))
+        nodestorage.addnode(Node(lon=float(ele['lon']), lat=float(ele['lat']), util=int(ele['util']), stay=int(ele['stay']), open=ele['open'], close=ele['close']))
     mapframenodestorage = NodeStorage()
     mapframenodestorage.storage = nodestorage.storage.copy()
 
@@ -58,29 +56,11 @@ def searching():
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
     
-    result = population.getmostfittour()
-    result_justlist = population.getmostfittour().tour
+    resulttour = population.getmostfittour()
 
-    lonlist = []
-    latlist = []
-    for i in result_justlist:
-        lonlist.append(i.getlon())
-        latlist.append(i.getlat())
-    for i in range(0, len(result_justlist)):    
-        if i+1<len(result_justlist):
-            plt.plot([lonlist[i], lonlist[i+1]], [latlist[i], latlist[i+1]], color="blue")
-            plt.text(lonlist[i], latlist[i], '{}'.format(i))
-        else:
-            plt.plot([lonlist[i], lonlist[0]], [latlist[i], latlist[0]], color='red')
-            plt.text(lonlist[i], latlist[i], '{}'.format(i))
+    makemap(mapframenodestorage, resulttour)
 
-    resultutil = 0
-    for i in result.tour:
-        resultutil += i.getutil()
-    resultutil += result.tour[0].getutil()
-    plt.text(139.60, 35.64, '{}'.format(resultutil))
-
-    plt.savefig('map(gaModlue_tw_md_alpha).png')
+    #cwd에서 resultmap.html을 불러와서/ 불러온것을 json형식으로 변형한뒤/ jsonify로 리스폰스
 
 
 

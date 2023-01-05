@@ -636,7 +636,6 @@ def makemap(mapframenodestorage, resulttour):
 
 if __name__ == '__main__':
     # testenv
-    n_nodes = 10
     populationsize = 50
     n_generation = 2500
     worstnum = 500
