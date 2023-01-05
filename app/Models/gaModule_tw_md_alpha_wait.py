@@ -1,4 +1,5 @@
 # run docker:osrm-backend first
+import os
 import requests
 import polyline
 import folium
@@ -604,6 +605,35 @@ def inspecttour(sometour, starttime):
     print(validity)
 
 
+def makemap(mapframenodestorage, resulttour):
+    mapframelatlist = []
+    mapframelonlist = []
+    for ele in mapframenodestorage.storage:
+        mapframelatlist.append(ele.getlat())
+        mapframelonlist.append(ele.getlon())
+
+    resulttourlist = []
+    resulttourlist_return = []
+    resultutil = 0
+    for ele in resulttour.tour:
+        resulttourlist.append([ele.getlat(), ele.getlon()])
+        resultutil += ele.getutil()
+    resulttourlist_return.append(resulttourlist[-1])
+    resulttourlist_return.append(resulttourlist[0])
+    
+    m = folium.Map(location=[sum(mapframelatlist)/mapframenodestorage.storagesize(), sum(mapframelonlist)/mapframenodestorage.storagesize()], zoom_start=13)
+
+    for i in range(0, mapframenodestorage.storagesize()):
+        folium.Marker(location=[mapframelatlist[i], mapframelonlist[i]], icon=folium.Icon(icon='play', color='green')).add_to(m)
+    
+    folium.PolyLine(locations=resulttourlist, weight=8, color='blue', opacity=0.6, tooltip=str(resultutil)).add_to(m)
+    folium.PolyLine(locations=resulttourlist_return, weight=8, color='red', opacity=0.6).add_to(m)
+
+    m.save(os.path.join(os.getcwd(), 'resultmap.html'))
+    #어디에 총 유틸적어주기
+
+
+
 if __name__ == '__main__':
     # testenv
     n_nodes = 10
@@ -620,7 +650,7 @@ if __name__ == '__main__':
     shinanomachi =  Node(lon=139.719525, lat=35.680659, util=30, stay=10, open=480, close=660, name='shinanomachi')
     nakano =        Node(lon=139.666109, lat=35.705378, util=100, stay=120, open=660, close=1200, name='nakano')
     shimokitazawa = Node(lon=139.668144, lat=35.661516, util=300, stay=30, open=1200, close=1440, name='shimokitazawa')
-    hatsudai =      Node(lon=139.686511, lat=35.680789, util=1000, stay=60, open=300, close=660, name='hatsudai')
+    hatsudai =      Node(lon=139.686511, lat=35.680789, util=50, stay=60, open=300, close=660, name='hatsudai')
     kichijoji =     Node(lon=139.579722, lat=35.702351, util=1000, stay=0, open=720, close=1080, name='kichijoji')
     shinagawa =     Node(lon=139.736571, lat=35.628930, util=700, stay=10, open=480, close=600, name='shinagawa')
 
@@ -660,21 +690,22 @@ if __name__ == '__main__':
     executionstart = time.time()
     for i in range(n_generation):
         population = geneticalgo.evolvepopulation(population)
-        # for j in nodestorage.storage:       #테스트
-        #     print(j.getname(), ':', j.getalpha(), end='/')    #테스트
-        # print('\n')                         #테스트
+        for j in nodestorage.storage:       #테스트
+            print(j.getname(), ':', j.getalpha(), end='/')    #테스트
+        print('\n')                         #테스트
     executionend = time.time()
 
     # get result from latest population
-    result = population.getmostfittour()
-    result_justlist = population.getmostfittour().tour # result = [node, node, node, node, ...]
+    resulttour = population.getmostfittour()
 
     # inspect result
-    inspecttour(result, starttime)
+    inspecttour(resulttour, starttime)
 
     # print exection time
     print("{:.4f} sec elapsed".format(executionend-executionstart))
 
+    # make a map with result_folium
+    makemap(mapframenodestorage, resulttour)
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?
     # 그럼 많아질때 worstnum도 증가시켜야하나?
@@ -683,7 +714,8 @@ if __name__ == '__main__':
     # 전체제네레이션수의/4 로 최악수를 잡으면될듯?
     
 
-    # make a map with result
+    # make a map with result_plt
+    result_justlist = population.getmostfittour().tour # result = [node, node, node, node, ...]
     import matplotlib.pyplot as plt
 
     original_lonlist = []
@@ -709,9 +741,9 @@ if __name__ == '__main__':
             plt.text(lonlist[i], latlist[i], '{}'.format(i))
 
     resultutil = 0
-    for i in result.tour:
+    for i in resulttour.tour:
         resultutil += i.getutil()
-    resultutil += result.tour[0].getutil()
+    resultutil += resulttour.tour[0].getutil()
     plt.text(139.60, 35.64, '{}'.format(resultutil))
 
     plt.savefig('map(gaModlue_tw_md_alpha).png')
