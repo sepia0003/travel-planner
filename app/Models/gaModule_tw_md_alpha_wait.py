@@ -745,7 +745,7 @@ if __name__ == '__main__':
     resultutil += resulttour.tour[0].getutil()
     plt.text(139.60, 35.64, '{}'.format(resultutil))
 
-    plt.savefig('map(gaModlue_tw_md_alpha).png')
+    plt.savefig('resultmap(gaModlue_tw_md_alpha).png')
 
     
 

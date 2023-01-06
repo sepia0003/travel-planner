@@ -59,7 +59,7 @@ def searching():
 
     makemap(mapframenodestorage, resulttour)
 
-    htmlmapstr = open('resultmap.html', 'r').read().replace('<!DOCTYPE html>', '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '')
+    htmlmapstr = open('resultmap.html', 'r').read()
     tempdict = {'data': htmlmapstr}
 
     return jsonify(tempdict)
