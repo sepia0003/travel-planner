@@ -347,7 +347,7 @@ class GeneticAlgo:
         bannodes = []
         for i in range(0, self.nodestorage.storagesize()):
             tempnode = self.nodestorage.getnode(i)
-            if (tempnode.getalpha() >= self.worstnum) and (tempnode not in bannodes):
+            if (tempnode.getalpha() >= self.worstnum) and (tempnode not in bannodes): #굳이 not in 할필요있나 절대 중복되지 않을것같은데
                 bannodes.append(tempnode)
         for ele in bannodes:    
             self.nodestorage.delnode(ele)
@@ -375,50 +375,26 @@ class GeneticAlgo:
         tracesum = 0
         for i in range(0, len(tempfitnesslist)):
             tracesum += abs(tempfitnesslist[i] - minfitness)
-            if point < tracesum:
+            if point <= tracesum:
                 return oldpopulation.tours[i]
 
     def crossover(self, parent1, parent2):      # parent1, parent2, child are all "tour"s
         child = Tour(self.nodestorage, False)
 
-        #parent1이라는 하나의 투어 내부에서 가능한 모든 루트(시작점에돌아오지않는경로)를 스택앤캐치방식으로 잡고
-        #해당 루트의 시작노드,끝노드의 인덱스를key로 피트니스값을value로 하는 딕셔너리로서 저장 
-        routefitnessdict = {}
-        for portionstart in range(0, parent1.toursize()):
-            historynode = []
-            for commondiff in range(0, parent1.toursize()):
-                portionend = portionstart + commondiff
-                if portionend >= parent1.toursize():
-                    portionend -= parent1.toursize()
-                historynode.append(parent1.getnode(portionend))
-                route = Tour(self.nodestorage, True)
-                route.tour = historynode
-                fitnessofroute = route.getfitness()
-                routefitnessdict[(portionstart, portionend)] = fitnessofroute #portionstart,end는 parent1투어내부의 노드의인덱스
-        
-        #그 딕셔너리에서 가장 피트니스가높은 루트를 parent1에서 가져온다.
-        #그 루트의 시작노드, 끝노드의 인덱스가 오름차순이면 child의 맨앞에서부터 채워나가고
-        #내림차순이면 일단 시작노드의 인덱스부터 끝인덱스까지 child에 맨앞에서부터 채워나가고 0인덱스부터 끝노드의 인덱스까지 그뒤로 채워나감
-        #(절대 있는 parent1의 노드인덱스위치 그대로 복붙하면 안된다. 그 인덱스위치 그대로 끝날때까지 고정이 되어버리기 때문)
-        maxfitness = max(routefitnessdict.values())
-        temprecord = []
-        for ele in routefitnessdict.keys():
-            if routefitnessdict[ele] == maxfitness:
-                temprecord.append(ele)
-        tempidx = int(len(temprecord) * random.random())
-        parent1_patchinfo = temprecord[tempidx]
-        patchstart = parent1_patchinfo[0]
-        patchend = parent1_patchinfo[1]
+        #먼저 patchstart, end를 랜덤으로정한다
+        patchstart = int(random.random() * parent1.toursize())
+        patchend = int(random.random() * parent1.toursize())
+
+        #그리고 케이스분류
         if patchstart <= patchend:
             for i in range(patchstart, patchend+1):
-                child.setnode(i-patchstart, parent1.getnode(i))
+                child.setnode(i, parent1.getnode(i))
         else:
             for i in range(patchstart, parent1.toursize()):
-                child.setnode(i-patchstart, parent1.getnode(i))
+                child.setnode(i, parent1.getnode(i))
             for i in range(0, patchend+1):
-                child.setnode(i+parent1.toursize()-patchstart, parent1.getnode(i))
+                child.setnode(i, parent1.getnode(i))
         
-        #////////////////////////////////////////
         #우선 P2를 복사해오고 복사한 P2에서 child에 있는 요소를 전부 제거
         tempp2nodes = parent2.tour.copy()
         for ele in child.tour:
@@ -426,110 +402,13 @@ class GeneticAlgo:
                 tempp2nodes.remove(ele)
             except:
                 pass    
-        
-        #방법1////////////////////////////////
-        
-        #그렇게 세모만으로 이루어진 P2를 기준으로 앞으로 생각함
-        # while len(tempp2nodes) != 0:
-        #     recorded = {}
-        #     notnonecnt = 0
-        #     for ele in child.tour:
-        #         if ele != None:
-        #             notnonecnt += 1
-        #     tempp2 = tempp2nodes.copy()
-        #     tempputnode = tempp2[0]
-        #     tempp2.remove(tempputnode)
 
-        #     for i in range(0, notnonecnt+1):
-        #         tempc = Tour(self.nodestorage, False)
-        #         tempc.tour = child.tour.copy()
-        #         tempc.tour[i:i] = [tempputnode]
-        #         tempc.delnode(None)
-        #         tempc.tour += tempp2
-        #         for j in range(0, len(tempp2)):
-        #             tempc.delnode(None)
-        #         recorded[(tempputnode, i)] = tempc.getfitness()
-            
-        #     maxcfitness = list(recorded.values())
-        #     maxcfitness = maxcfitness[0]
-        #     for ele in recorded.keys():
-        #         if recorded[ele] >= maxcfitness:
-        #             maxcfitness = recorded[ele]
-            
-        #     maxcinfo = None
-        #     for ele in recorded.keys():
-        #         if recorded[ele] == maxcfitness:
-        #             maxcinfo = ele
-
-
-        #     #print('maxcinfo의정보:', maxcinfo)
-        #     child.tour[maxcinfo[1]:maxcinfo[1]] = [maxcinfo[0]]
-        #     child.delnode(None)
-        #     #print('child의정보:', child.tour)   
-        #     tempp2nodes.remove(maxcinfo[0])
-
-        #방법2////////////////////////////////////////////
-        #먼저child의 None을 전부삭제
-        while child.containing(None):
-            child.delnode(None)
-        
-        # print('차일드:', child.tour)
-
-        while len(tempp2nodes) != 0:
-            randidxofp2 = int(len(tempp2nodes) * random.random())
-            ele = tempp2nodes[randidxofp2]
-            tempp2nodes.remove(ele)
-            record = {}
-            for i in range(0, child.toursize()+1):
-                tempc = Tour(self.nodestorage, True)
-                tempc.tour = child.tour.copy()
-                tempc.tour[i:i] = [ele]
-                record[(ele, i)] = tempc.getfitness()
-            maxcfitness = max(record.values()) #maxfitness가 같아버리면 안되는데.
-            randombox = []
-            for rec in record.keys():
-                if record[rec] == maxcfitness:
-                    randombox.append(rec)
-            randomidx = int(random.random() * len(randombox))
-            temprec = randombox[randomidx]
-            child.tour[temprec[1]:temprec[1]] = [temprec[0]]
+        #그리고 child의 None 부분에 p2의 남은 노드를 순서대로 대입
+        for i in range(0, child.toursize()):
+            if child.getnode(i) == None:
+                child.setnode(i, tempp2nodes[0])
+                tempp2nodes.remove(tempp2nodes[0])
     
-                       
-
-        # for i in range(0, parent2.toursize()):
-        #     if not child.containing(parent2.getnode(i)):
-        #         fitrecord = {}
-        #         for j in range(0, notnonecnt+1):
-        #             searchtour = Tour(self.nodestorage, False)
-        #             searchtour.tour = child.tour[0:notnonecnt]
-        #             searchtour.tour[j:j] = [parent2.getnode(i)]
-        #             for k in range(notnonecnt+2, parent2.toursize()):
-        #                 searchtour.tour[k] = 
-                            
-        #             fitrecord[(parent2.getnode(i), j)] = searchtour.getfitness()
-        #         maxfit = max(fitrecord.values())
-        #         for ele in fitrecord.keys():
-        #             if fitrecord[ele] == maxfit:
-        #                 putidx = ele
-        #         child.tour[putidx[1]:putidx[1]] = [putidx[0]]
-        #         child.delnode(None)
-        #         notnonecnt += 1
-        # for i in child.tour:
-        #     print(i.getname(), end='-')
-        # print('')
-
-                
-        
-        # #그리고 child의 남은 None부분에 parent2에서 순서교차로 가져옴
-        # for i in range(0, parent2.toursize()):
-        #     if not child.containing(parent2.getnode(i)):
-        #         for j in range(0, parent2.toursize()):
-        #             if child.getnode(j) == None:
-        #                 child.setnode(j, parent2.getnode(i))
-        #                 break
-
-        
-        
         return child
 
     def mutate(self, tour):
