@@ -1,7 +1,7 @@
 from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
 from flask import current_app as app
 from ..Models.dbModule import Database
-from ..Models.gaModule_tw_md_alpha_wait import Node, NodeStorage, Tour, Population, GeneticAlgo, makemap
+from ..Models.gaModule_compare_for_tw_md_alpha_wait._roulettewheel_LFIlineframe import Node, NodeStorage, Tour, Population, GeneticAlgo, makemap
 import matplotlib.pyplot as plt
 
 bp = Blueprint('main', __name__, url_prefix='/')
@@ -30,8 +30,8 @@ def reset():
 @bp.route('/searching', methods=['GET'])
 def searching():
     populationsize = 50
-    n_generation = 500
-    worstnum = 100
+    n_generation = 1000
+    worstnum = 200
     splittemp0 = request.args.get('starttime').split(':')
     starttime = int(splittemp0[0])*60 + int(splittemp0[1])
 
