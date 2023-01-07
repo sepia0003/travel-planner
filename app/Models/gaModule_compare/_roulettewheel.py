@@ -269,8 +269,8 @@ class GeneticAlgo:
             elitismoffset = 1
 
         for i in range(elitismoffset, oldpopulation.populationsize()):
-            parent1 = self.makecandselectone(oldpopulation)
-            parent2 = self.makecandselectone(oldpopulation)
+            parent1 = self.rwselectone(oldpopulation)
+            parent2 = self.rwselectone(oldpopulation)
             child = self.crossover(parent1, parent2)
             newpopulation.settour(i, child)
 
@@ -358,16 +358,25 @@ class GeneticAlgo:
         for i in range(0, oldpopulation.populationsize()):
             _ = oldpopulation.gettour(i).getfitness()
 
-    def makecandselectone(self, oldpopulation):
-        #중복을 허락해서 oldpopulation에서 요소를 미리정한후보사이즈만큼 뽑아옴 그중에서 가장 피트니스높은것을 선택하는 작업
-        temppopulation = Population(self.nodestorage, self.parentcandsize, False)
+    def rwselectone(self, oldpopulation):
+        #일단 pop의 모든 투어의 fitness중 가장 작은값(마이너스포함)을 잡고 그값과 각 fitness사이의 절대값을 구한뒤 다더한다.
+        tempfitnesslist = []
+        for ele in oldpopulation.tours:
+            tempfitnesslist.append(ele.getfitness())
+        
+        minfitness = min(tempfitnesslist)
+        sumoffitness = 0
+        for ele in tempfitnesslist:
+            sumoffitness += abs(ele - minfitness)
 
-        for i in range(0, self.parentcandsize):         # randomly select 5 parentcand on previous population, and regard them as temppopulation, and get mostfit parent on it.
-            randpopidx = int(random.random() * oldpopulation.populationsize())
-            temppopulation.settour(i, oldpopulation.gettour(randpopidx)) # temppopulation can be like [tour5, tour5, tour2, tour1, tour8]
+        #그사이의 어느 한점을 랜덤으로 찍는다.
+        point = random.uniform(0, sumoffitness)
 
-        selectedtour = temppopulation.getmostfittour()
-        return selectedtour
+        tracesum = 0
+        for i in range(0, len(tempfitnesslist)):
+            tracesum += abs(tempfitnesslist[i] - minfitness)
+            if point < tracesum:
+                return oldpopulation.tours[i]
 
     def crossover(self, parent1, parent2):      # parent1, parent2, child are all "tour"s
         child = Tour(self.nodestorage, False)
@@ -638,7 +647,7 @@ if __name__ == '__main__':
     # testenv
     populationsize = 50
     n_generation = 500
-    worstnum = 250
+    worstnum = 200
     starttime = 480
 
     # testnodes

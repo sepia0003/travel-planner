@@ -30,8 +30,8 @@ def reset():
 @bp.route('/searching', methods=['GET'])
 def searching():
     populationsize = 50
-    n_generation = 2500
-    worstnum = 500
+    n_generation = 500
+    worstnum = 100
     splittemp0 = request.args.get('starttime').split(':')
     starttime = int(splittemp0[0])*60 + int(splittemp0[1])
 
