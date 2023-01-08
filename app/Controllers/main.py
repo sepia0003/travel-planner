@@ -1,7 +1,9 @@
+import sys, os
 from flask import Blueprint, request, render_template, flash, redirect, url_for, jsonify
 from flask import current_app as app
-from ..Models.dbModule import Database
-from ..Models.gaModule_compare_for_tw_md_alpha_wait._roulettewheel_LFIlineframe import Node, NodeStorage, Tour, Population, GeneticAlgo, makemap
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from Models.dbModule import Database
+from Models.gaModule_compare_for_tw_md_alpha_wait._roulettewheel_LFIlineframe import Node, NodeStorage, Tour, Population, GeneticAlgo, makemap
 import matplotlib.pyplot as plt
 
 bp = Blueprint('main', __name__, url_prefix='/')
