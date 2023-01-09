@@ -616,33 +616,73 @@ def inspecttour(sometour, starttime):
     print(validity)
 
 
-def makemap(mapframenodestorage, resulttour):
+def makemap(mapframenodestorage, resulttour, starttime):
     mapframelatlist = []
     mapframelonlist = []
+    mapframeutillist = []
+    mapframestaylist = []
+    mapframeopencloselist = []
     for ele in mapframenodestorage.storage:
         mapframelatlist.append(ele.getlat())
         mapframelonlist.append(ele.getlon())
-
-    resulttourlist = []
-    resulttourlist_return = []
-    resultutil = 0
-    for ele in resulttour.tour:
-        resulttourlist.append([ele.getlat(), ele.getlon()])
-        resultutil += ele.getutil()
-    resulttourlist_return.append(resulttourlist[-1])
-    resulttourlist_return.append(resulttourlist[0])
+        mapframeutillist.append(ele.getutil())
+        mapframestaylist.append(ele.getstay())
+        mapframeopencloselist.append((ele.getopen(), ele.getclose()))
     
     m = folium.Map(location=[sum(mapframelatlist)/mapframenodestorage.storagesize(), sum(mapframelonlist)/mapframenodestorage.storagesize()], zoom_start=13)
 
     for i in range(0, mapframenodestorage.storagesize()):
-        folium.Marker(location=[mapframelatlist[i], mapframelonlist[i]], icon=folium.Icon(icon='play', color='green')).add_to(m)
+        folium.Marker(location=[mapframelatlist[i], mapframelonlist[i]], icon=folium.Icon(icon='play', color='green'), tooltip='util: {}/ stay: {}/ tw: {}'.format(mapframeutillist[i], mapframestaylist[i], mapframeopencloselist[i])).add_to(m)
     
-    folium.PolyLine(locations=resulttourlist, weight=8, color='blue', opacity=0.6, tooltip=str(resultutil)).add_to(m)
-    folium.PolyLine(locations=resulttourlist_return, weight=8, color='red', opacity=0.6, tooltip=str(resultutil)).add_to(m)
+    currenttime = starttime
+    recordutil = 0
+    for i in range(0, resulttour.toursize()):
+        frompoint = resulttour.getnode(i)
+        topoint = None
+        if i+1 < resulttour.toursize():
+            topoint = resulttour.getnode(i+1)
+        else:
+            topoint = resulttour.getnode(0)
+        if frompoint.getstay() <= frompoint.getclose()-frompoint.getopen():
+            if currenttime < frompoint.getopen():
+                currenttime += frompoint.getopen() - currenttime
+                currenttime += frompoint.getstay()
+                recordutil += frompoint.getutil()
+                tempdeparr = [currenttime]
+                currenttime += frompoint.timeTo(topoint)
+                tempdeparr.append(currenttime)
+            elif frompoint.getclose() < currenttime+frompoint.getstay():
+                tempdeparr = [currenttime]
+                currenttime += frompoint.timeTo(topoint)
+                tempdeparr.append(currenttime)
+            else:
+                currenttime += frompoint.getstay()
+                recordutil += frompoint.getutil()
+                tempdeparr = [currenttime]
+                currenttime += frompoint.timeTo(topoint)
+                tempdeparr.append(currenttime)
+        else:
+            tempdeparr = [currenttime]
+            currenttime += frompoint.timeTo(topoint)
+            tempdeparr.append(currenttime)
+        folium.PolyLine(locations=[[frompoint.getlat(), frompoint.getlon()], [topoint.getlat(), topoint.getlon()]], weight=8, color='blue', opacity=0.6, tooltip='{}~{}'.format(tempdeparr[0], tempdeparr[1])).add_to(m)
+
+    if resulttour.getnode(0).getstay() <= resulttour.getnode(0).getclose()-resulttour.getnode(0).getopen():
+        if currenttime < resulttour.getnode(0).getopen():
+            currenttime += resulttour.getnode(0).getopen() - currenttime
+            currenttime += resulttour.getnode(0).getstay()
+            recordutil += resulttour.getnode(0).getutil()
+        elif resulttour.getnode(0).getclose() < currenttime+resulttour.getnode(0).getstay():
+            pass
+        else:
+            currenttime += resulttour.getnode(0).getstay()
+            recordutil += resulttour.getnode(0).getutil()
+    else:
+        pass
+    folium.PolyLine(locations=[[frompoint.getlat(), frompoint.getlon()], [topoint.getlat(), topoint.getlon()]], weight=8, color='red', opacity=0.6, tooltip='{}~{}'.format(tempdeparr[0], tempdeparr[1])).add_to(m)
+    folium.Marker(location=[topoint.getlat(), topoint.getlon()], icon=folium.Icon(icon='play', color='green'), tooltip='util: {}/ stay: {}/ tw: {}'.format(topoint.getutil(), topoint.getstay(), (topoint.getopen(), topoint.getclose())), popup=recordutil).add_to(m)
 
     m.save(os.path.join(os.getcwd(), 'resultmap.html'))
-    #어디에 총 유틸적어주기
-
 
 
 if __name__ == '__main__':
@@ -715,7 +755,7 @@ if __name__ == '__main__':
     print("{:.4f} sec elapsed".format(executionend-executionstart))
 
     # make a map with result_folium
-    makemap(mapframenodestorage, resulttour)
+    makemap(mapframenodestorage, resulttour, starttime)
 
     # 노드의 개수가 많아지면 제네레이션도 많아져야하나?
     # 그럼 많아질때 worstnum도 증가시켜야하나?
